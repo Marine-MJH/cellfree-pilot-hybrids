@@ -150,9 +150,45 @@ Bootstrap mean SE 95% CI:
 Interpretation:
 
 - Hybrid#3 wins E4 because its TopAP graph is sparse enough to use fewer actual
-  pilots.
+  pilots. A fixed-`tau_p_length=15` sanity check reduced the large mean-SE gap
+  to about `+0.07%`, so the headline E4 gain should be interpreted as adaptive
+  training-overhead reduction, not as a large fixed-budget SINR gain.
 - Mussbah loses E4 because the beam-domain conflict graph becomes too dense in
-  this environment.
+  this environment, increasing actual pilot count and reducing the prelog factor.
+
+Readable E4 figures:
+
+- `figures/cross_paper_unified_E4_key_cdf_E4.png`: Random / Mussbah / Hybrid#3
+  only, for slide readability.
+- `figures/cross_paper_unified_E4_effect_decomposition.png`: mean SE shift next
+  to actual pilot count; this is the safer main figure for E4.
+
+### 3.4 Gao/Mussbah 2x2 Sanity Matrix
+
+Question checked: can we evaluate Gao and Mussbah in both the single-antenna
+Gao environment and the multi-antenna Mussbah environment?
+
+Answer:
+
+| Algorithm / environment | E1: Gao N=1 paper env | E2: Mussbah N=8 paper env |
+| --- | --- | --- |
+| Gao matching | Paper-faithful; `+3.66%` mean Mbps vs Random in 50-MC sanity | Transplant baseline; `+0.04%` mean SE vs Random in existing E2 result |
+| Mussbah | Not paper-faithful in N=1. Forced adaptive variant used `134.3` pilots on average and collapsed to `-59.4%` mean Mbps vs Random. Forced clipped variant was near Random (`+0.66%`). | Paper-environment algorithm; `-2.23%` mean SE vs Random in existing E2 result |
+
+Artifacts:
+
+- `figures/two_by_two_gao_mussbah_matrix.csv`
+- `figures/two_by_two_gao_mussbah_matrix.png`
+
+Interpretation:
+
+- A strict paper-faithful 2x2 matrix is impossible because Mussbah requires
+  multi-antenna beam-domain information while Gao's original environment is
+  single-antenna.
+- The off-diagonal Gao-in-N=8 cell is a reasonable algorithm transplant because
+  Gao only needs AP-level large-scale gain.
+- The off-diagonal Mussbah-in-N=1 cell is a forced/degenerate variant. It should
+  only be used to explain why a strict 2x2 is not meaningful.
 
 ## 4. What To Tell A Teammate
 
@@ -165,13 +201,16 @@ Safe claims:
 - Gao's small-pilot gain over Random is reproduced closely.
 - Mussbah's adaptive-pilot mechanism is implemented, but its exact paper Fig. 1
   numeric gain is not reproduced in the default setting.
-- Hybrid#3 is the strongest E4 common-ground result among the tested schemes.
+- Hybrid#3 is the strongest E4 common-ground result among the tested schemes,
+  mainly because it uses fewer actual pilots and therefore lower training
+  overhead.
 
 Do not claim:
 
 - "Gao is fully reproduced in every figure and benchmark ordering."
 - "Mussbah's `+8%` paper claim is exactly reproduced."
 - "E4 proves one algorithm is universally best."
+- "Hybrid#3 has a large fixed-budget SINR advantage in E4."
 - "The Mussbah SE code is a line-by-line closed-form implementation of every
   trace term in Eq. (10)-(14)."
 

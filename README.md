@@ -98,7 +98,9 @@ loses: Hybrid#3 colors a much sparser conflict graph.
 | [envelope_K_tau10.png](figures/envelope_K_tau10.png) | K-sensitivity envelope |
 | [cross_paper_full_final.png](figures/cross_paper_full_final.png) | Multi-antenna stress test |
 | [cross_paper_unified_3env.png](figures/cross_paper_unified_3env.png) | E2/E3/E4 comparison |
+| [cross_paper_unified_E4_effect_decomposition.png](figures/cross_paper_unified_E4_effect_decomposition.png) | E4 SE shift vs actual-pilot-count decomposition |
 | [cross_paper_unified_E4_tau_p_actual.png](figures/cross_paper_unified_E4_tau_p_actual.png) | E4 actual pilot count diagnostic |
+| [two_by_two_gao_mussbah_matrix.png](figures/two_by_two_gao_mussbah_matrix.png) | Gao/Mussbah antenna-model 2x2 sanity matrix |
 
 ## Algorithms
 

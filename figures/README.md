@@ -27,7 +27,11 @@ Core files to show in a report or defense:
 - `cross_paper_full_final.png`
 - `cross_paper_unified_3env.png`
 - `cross_paper_unified_E4_cdf_E4.png`
+- `cross_paper_unified_E4_key_cdf_E4.png`
+- `cross_paper_unified_E4_effect_decomposition.png`
 - `cross_paper_unified_E4_tau_p_actual.png`
+- `two_by_two_gao_mussbah_matrix.png`
+- `two_by_two_gao_mussbah_matrix.csv`
 
 If a bootstrap command needs a raw CSV that is no longer in this directory, either rerun the
 corresponding experiment or copy the needed raw CSV back from the archive.
