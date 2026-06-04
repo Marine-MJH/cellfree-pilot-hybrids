@@ -48,6 +48,7 @@ def mussbah_uplink_se(
     pilots: np.ndarray,
     *,
     n_channel_samples: int = 20,
+    tau_p_length: int | None = None,
     delta: float = 0.95,
     rician_k_db: float = 10.0,
     one_ring_radius_m: float | None = None,
@@ -64,6 +65,10 @@ def mussbah_uplink_se(
         Pilot index assigned to each UE.
     n_channel_samples : int
         Number of small-scale channel realisations per setup.
+    tau_p_length : int or None
+        Pilot sequence length used for pilot noise variance and prelog. None
+        uses ``max(pilots) + 1``. Set this to the design budget for fixed-budget
+        sanity checks where an adaptive assignment leaves some pilots unused.
     delta : float
         Active beam threshold in Eq. 2.
     rician_k_db, one_ring_radius_m :
@@ -93,11 +98,10 @@ def mussbah_uplink_se(
 
     pilots = np.asarray(pilots, dtype=int)
     # Pilot sequence length for pilot signal model and the (τ_c - τ_p)/τ_c
-    # training-overhead factor. We use max index + 1 (i.e. the τ_p design
-    # parameter as observed in the pilot output) to keep all algorithms on
-    # the same fair footing — fixed-τ_p schemes and Mussbah (which clips to
-    # the same τ_p via modulo when chromatic > τ_p) both end up with the
-    # same training overhead factor here.
+    # training-overhead factor. By default, use max index + 1 so adaptive
+    # schemes expose their actual pilot count. For fixed-budget sanity checks,
+    # pass tau_p_length explicitly so unused pilot sequences still count toward
+    # training overhead and pilot observation length.
     #
     # NOTE: Mussbah paper §V.A claims 92% of Mussbah's advantage comes from
     # reduced training overhead when chromatic < τ_p. Capturing that requires
@@ -106,7 +110,15 @@ def mussbah_uplink_se(
     # chromatic number on Mussbah's beam-overlap graph exceeds 10 for the
     # K=30 setting, so Mussbah's adaptive τ_p advantage cannot materialise
     # in this reproduction without further channel-model upgrades.
-    tau_p = max(int(pilots.max()) + 1, 1)
+    tau_p_observed = max(int(pilots.max()) + 1, 1)
+    if tau_p_length is None:
+        tau_p = tau_p_observed
+    else:
+        tau_p = int(tau_p_length)
+        if tau_p < tau_p_observed:
+            raise ValueError(
+                f"tau_p_length={tau_p} is smaller than max(pilots)+1={tau_p_observed}."
+            )
     tau_c = cfg.tau_c
     sigma2 = cfg.noise_power_w
     pilot_power = cfg.pilot_power_w
