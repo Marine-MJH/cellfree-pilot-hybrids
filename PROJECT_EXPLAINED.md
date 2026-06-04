@@ -138,7 +138,7 @@ benchmark 는 별도 논문에서 가져온 것이다. 우리도 *그 두 paper 
 [Inference] 이 두 baseline 을 *paper-faithful 하게 구현* 한 결과, 우리 Liu/Chen 이 *Gao
 논문의 reference 구현보다 강하게* 나왔다. 즉 Gao 논문이 자신의 알고리즘 advantage 를
 보여줄 때 *상대적으로 약한 baseline* 과 비교했을 가능성이 있다. 자세한 분석은
-`PROGRESS.md §3.4` 참조.
+`PROGRESS.md §3.1` 참조.
 
 ## 4.2 Mussbah et al. 2024
 
@@ -732,11 +732,11 @@ python experiments/bootstrap_se_ci.py \
 
 1. `PROJECT_EXPLAINED.md` — 지금 문서.
 2. `README.md` — 빠른 요약.
-3. `Defense_summary.md` — 발표/디펜스용 claim.
-4. `Mussbah_reproduce_plan.md` — Mussbah 구현/실험 전체 기록.
-5. `Diagnosis.md` — 왜 hybrid 를 만들었는지.
-6. `PROGRESS.md` — Gao reproduce 상세.
-7. `TUTORIAL.md` — 실행 방법과 코드 walkthrough.
+3. `PROGRESS.md` — 현재 상태와 claim boundary.
+4. `Defense_summary.md` — 발표/디펜스용 claim.
+5. `TUTORIAL.md` — 실행 방법과 코드 walkthrough.
+6. `Diagnosis.md` — 왜 hybrid 를 만들었는지.
+7. `Mussbah_reproduce_plan.md` — Mussbah 구현/실험 전체 기록.
 
 ## 15. 발표에서 보여줄 핵심 그림
 
@@ -764,10 +764,10 @@ python experiments/bootstrap_se_ci.py \
 2. **Mussbah Greedy / WGF baseline 미구현**: Paper Fig.1 의 5개 baseline 중 우리는 Random,
    GC (Liu) 만 그대로 포함. Greedy (Ngo 2017) / WGF (Zeng 2021) 는 *paper Fig.1 직접 비교
    상* 빠진 부분.
-3. **Gao paper original 의 multi-antenna 확장 직접 구현 X**: Gao matching 의 *beam-domain
-   extension* 은 `NEXT_STEPS_AGENT_PLAN.md` §4 의 *optional advanced* 작업으로 남김. 현재
-   E3/E4 의 Gao matching 은 *element-domain β 만 사용* (multi-antenna 환경에서도 그대로
-   동작 but beam 정보 활용 X).
+3. **Gao paper original 의 multi-antenna beam-domain 확장 직접 구현 X**: 현재 E3/E4 의
+   Gao matching 은 *element-domain β 만 사용* (multi-antenna 환경에서도 그대로 동작 but beam
+   정보 활용 X). 즉 E3/E4 의 Gao 는 paper-original Gao 가 아니라 multi-antenna 환경에 그대로
+   이식한 baseline 으로 해석해야 함.
 4. **Mussbah paper 의 *DFT codebook size / SNR detection threshold 의 정확한 dB / channel
    covariance fine-tuning*** 의 paper 미명시 detail 의 cumulative effect 가 우리 환경의
    *chromatic 12 vs paper inferred chromatic 3* 차이를 만듬. Default τ_p=10 에서 paper +8%

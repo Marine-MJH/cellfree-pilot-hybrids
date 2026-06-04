@@ -5,7 +5,7 @@
 
 ## 1. 목적
 
-`PROGRESS.md` §3.4~3.5 에서 다음이 확인됨:
+`PROGRESS.md` §3.1 에서 다음이 확인됨:
 
 - Gao matching 은 **small τ_p (=10) 에서 모든 alternative 를 이김** (통계적 유의).
 - Large τ_p (≥20) 에서는 Graph_full / Structured_full 이 약간 우위 (borderline).
@@ -373,7 +373,7 @@ pilot 할당* 을 *그룹 내 conflict graph coloring* 으로 교체.
 각 hybrid 후보를:
 
 - D1, D2 (이번 진단 metric) 직접 평가
-- 기존 200 MC sensitivity 환경 (PROGRESS.md §3.4) 에서 P5 throughput 비교
+- 기존 200 MC sensitivity 환경 (PROGRESS.md §3.1) 에서 P5 throughput 비교
 - Bootstrap 95% CI 로 통계적 유의성 (`bootstrap_p5_ci.py` 재활용)
 - 진단 결과 표 (Diagnosis.md §4 형식) 으로 *왜 좋은지* / *왜 안 좋은지* 정량 제시
 
@@ -611,7 +611,7 @@ greedy contam-min 이 직접 minimise. 두 axis 모두 활용.
 
 | Setting | TopAP bisect (D1) | H2 Gao+greedy (D1+D2) | Mussbah (beam-domain D1) |
 | --- | --- | --- | --- |
-| Element-domain Gao (PROGRESS.md §3) | +5-7% | +4-6% | (N/A) |
+| Element-domain Gao (PROGRESS.md §3.1) | +5-7% | +4-6% | (N/A) |
 | Element-domain Diagnosis (§4-§6) | best at τ_p=10 | best at τ_p≥15 | (N/A) |
 | Multi-antenna Mussbah env (K=30) | -1.3% (tied) | -1.1% (tied) | -2.2% |
 | Multi-antenna Gao env (K=200) | **+0.6% (1위)** | **+0.5% (2위)** | -53.6% catastrophic |

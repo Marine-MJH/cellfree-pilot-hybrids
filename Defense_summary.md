@@ -14,12 +14,12 @@ Mussbah_reproduce_plan.md 의 cross-reference 로.
 
 | Paper | Reproduce 수준 | 핵심 evidence | Defendable claim |
 | --- | --- | --- | --- |
-| **Gao 2024** | **조건부 paper-faithful** | PROGRESS.md §3.4 의 200 MC + bootstrap CI + multi-seed | small-τ_p advantage 정량 재현 (paper +23%, 우리 +21.7%, statistically significant) |
+| **Gao 2024** | **조건부 paper-faithful** | PROGRESS.md §3.1 의 200 MC 결과 + CI artifacts | small-τ_p advantage 정량 재현 (paper +23%, 우리 +21.7%, statistically significant) |
 | **Mussbah 2024** | **paper-spec implementation 완료, paper claim 정량은 부분** | Mussbah_reproduce_plan.md §11-§18 | algorithm + UMi + one-ring + Rician + SE formula 모두 paper-spec 구현. Paper +8% 의 *training overhead 부분 (+2.2%)* 만 우리 환경에서 살아남. 나머지 (+5.8%) 는 paper 미명시 detail 차이 |
 
 ### 2.1 Gao reproduce — 단단함
 
-PROGRESS.md §3 의 200 MC 결과:
+PROGRESS.md §3.1 의 200 MC 결과:
 
 - τ_p=10, max-min, Mussbah Random 비교: **paper +23% / 우리 +21.7%** ✓
 - Bootstrap 95% CI 의 3.0× margin 위 — *statistically significant*
@@ -50,7 +50,7 @@ PROGRESS.md §3 의 200 MC 결과:
 
 | Setting | 1위 | 2위 | Mussbah rank |
 | --- | --- | --- | --- |
-| **Gao paper-faithful (N=1, single-antenna)** PROGRESS.md §3 | TopAP bisect | H2 Gao+greedy | (single-antenna environment, Mussbah algorithm 적용 불가) |
+| **Gao paper-faithful (N=1, single-antenna)** PROGRESS.md §3.1 | TopAP bisect | H2 Gao+greedy | (single-antenna environment, Mussbah algorithm 적용 불가) |
 | **Mussbah paper-faithful (N=8)** K=30 τ_p=10 | **Hybrid#3** (P5 0.774) | TopAP / H2 | 2~3위 (P5 0.754) |
 | **Mussbah paper-faithful (N=8)** K=30 τ_p=20 | **Hybrid#3** (mean 5.37) | Mussbah (5.17) | 2위 |
 | **Multi-antenna stress test (N=8)** K=200, M=500 (Gao environment 확장) | **Hybrid#4** (P5 1.165) | TopAP bisect / H2 (P5 1.163) | last (-53.5%, K-density catastrophic) |
@@ -151,7 +151,8 @@ size 차이* 가 직접 원인 — chromatic 의 root cause 와 같음. *Algorit
 
 - τ_p=20 (paper claim envelope): Hybrid#3 / Mussbah vs Random 의 *mean SE gap* 이 *CI 완전 분리* (statistically significant). P5 는 CI overlap 으로 marginal.
 - K=45 의 Mussbah catastrophic decline (-6.5%) 도 CI 완전 분리.
-- Multi-seed (s=7, s=42) 결과 차이 < 3% (PROGRESS.md §3.4.5).
+- Multi-seed / bootstrap sensitivity artifacts 는 `figures/bootstrap_p5_ci_*.csv` 와
+  `figures/bootstrap_ci_unified_E4*.csv` 에 정리됨.
 - E4 seed=7 full run 에서 Hybrid#3 mean SE CI 가 Random CI 와 분리. seed42 50×10 sanity 도
   Hybrid#3 +5.30%, Mussbah -8.12% vs Random 으로 같은 방향.
 
@@ -182,7 +183,7 @@ size 차이* 가 직접 원인 — chromatic 의 root cause 와 같음. *Algorit
 
 | File | Purpose |
 | --- | --- |
-| `PROGRESS.md` | Gao reproduce + cross-paper conclusion |
+| `PROGRESS.md` | current handoff snapshot + result boundaries |
 | `Diagnosis.md` | D1/D2 axis diagnosis + Hybrid #1/#2/#3/#4 motivation |
 | `Mussbah_reproduce_plan.md` | Mussbah reproduce + all paper-faithful experiments |
 | `Defense_summary.md` (이 파일) | 디펜스용 1-page 요약 |
@@ -218,7 +219,7 @@ size 차이* 가 직접 원인 — chromatic 의 root cause 와 같음. *Algorit
 
 - Figure: `gao_fig2_cdf_final200.png` 또는 `gao_fig3_vs_pilot_number_final200.png`
 - Paper claim +23% vs Random (small τ_p, max-min) — 우리 +21.7% ✓
-- 200 MC + bootstrap CI + multi-seed robustness (PROGRESS.md §3.4 인용)
+- 200 MC + bootstrap CI + multi-seed robustness (PROGRESS.md §3.1 및 bootstrap CSV 인용)
 - Limit: large-τ_p 에서 Liu/Chen 보다 약간 lose (paper-faithful Liu/Chen 의 강함)
 
 ### Slide 4 — Mussbah reproduce + paper claim 정량 차이 (3분)
@@ -261,7 +262,7 @@ size 차이* 가 직접 원인 — chromatic 의 root cause 와 같음. *Algorit
 
 ### Slide 9 — Statistical defense (1분)
 
-- Bootstrap 95% CI table (Mussbah_reproduce_plan.md §19.2)
+- Bootstrap 95% CI table (Mussbah_reproduce_plan.md §21.2)
 - "Mean SE level statistically significant for τ_p=20, Hybrid#3 vs Random"
 - P5 SE high MC variance → marginal (정직)
 

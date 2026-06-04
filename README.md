@@ -227,12 +227,12 @@ but that archive is intentionally ignored by git.
 
 ## Documentation
 
-- [PROJECT_EXPLAINED.md](PROJECT_EXPLAINED.md): full beginner-friendly explanation
-- [Defense_summary.md](Defense_summary.md): defense-ready summary and FAQ
-- [PROGRESS.md](PROGRESS.md): Gao reproduction details
-- [Mussbah_reproduce_plan.md](Mussbah_reproduce_plan.md): Mussbah reproduction and E4 details
-- [Diagnosis.md](Diagnosis.md): D1/D2 algorithm diagnostics and hybrid motivation
-- [TUTORIAL.md](TUTORIAL.md): command-oriented walkthrough
+- [PROJECT_EXPLAINED.md](PROJECT_EXPLAINED.md): full beginner-friendly explanation.
+- [PROGRESS.md](PROGRESS.md): current teammate handoff snapshot and result boundaries.
+- [Defense_summary.md](Defense_summary.md): presentation-ready claims and FAQ.
+- [TUTORIAL.md](TUTORIAL.md): command-oriented walkthrough.
+- [Diagnosis.md](Diagnosis.md): D1/D2 algorithm diagnostics and hybrid motivation.
+- [Mussbah_reproduce_plan.md](Mussbah_reproduce_plan.md): long-form Mussbah experiment log.
 
 ## Citation
 

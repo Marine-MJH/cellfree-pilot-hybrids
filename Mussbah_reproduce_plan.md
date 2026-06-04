@@ -1233,7 +1233,8 @@ N=8 확장*. 따라서:
 - 이 cross-paper figure 는 *paper-environment direct cross-reproduce* 가 아님.
 - *Multi-antenna environment 통일 후 K-density (K=30 vs K=200) algorithm transferability
   stress test*.
-- *진정한 multi-antenna unified cross-paper benchmark* 는 `NEXT_STEPS_AGENT_PLAN.md` 의 *unified environment* 설계 필요.
+- *진정한 multi-antenna unified cross-paper benchmark* 는 이후 E4 common-ground benchmark
+  로 수행됨 (§22, `PROGRESS.md` §3.3).
 
 실행: `python experiments/cross_paper_full.py --gao-setups 100 --gao-channel-samples 5
 --out-suffix _final` — Mussbah setting reuse (100×10, all 9 schemes) + Gao setting fresh
@@ -1278,7 +1279,7 @@ N=8 확장*. 따라서:
 
 §11-§17 의 결과들에 bootstrap CI 추가 + paper-quality envelope figure 생성.
 
-### 19.1 Bootstrap CI 산출물
+### 21.1 Bootstrap CI 산출물
 
 `experiments/bootstrap_se_ci.py` — 모든 raw SE CSV 의 P5/median/mean 의 95% percentile
 bootstrap CI (B=1000).
@@ -1291,7 +1292,7 @@ bootstrap CI (B=1000).
 - `figures/bootstrap_ci_mussbah_fig1_full_raw_snr6db.csv` — +6dB threshold (200×20)
 - `figures/bootstrap_ci_mussbah_fig3_k_sweep_raw_100x10_v3.csv` — K sweep CI
 
-### 19.2 핵심 statistical defendable claim
+### 21.2 핵심 statistical defendable claim
 
 | Comparison | Mean SE gap | CI overlap? | Statistically significant? |
 | --- | ---: | --- | --- |
@@ -1302,7 +1303,7 @@ bootstrap CI (B=1000).
 
 → *Mean SE level 에서 우리 claim 통계적으로 단단*. P5 는 high MC variance 로 marginal.
 
-### 19.3 Defense-quality figures
+### 21.3 Defense-quality figures
 
 - `figures/envelope_tau_p_K30.png` — τ_p_design envelope at K=30: Mussbah/Hybrid#3 flat at
   high SE (adaptive τ_p), others declining → Mussbah/Hybrid#3 advantage 가 τ_p_design 증가
@@ -1316,7 +1317,7 @@ bootstrap CI (B=1000).
   - 다른 algorithm 들 ≈ 0% (within ±0.2%) for all K
   - **Hybrid#3 가 K=25-35 영역에서 유일한 positive**
 
-### 19.4 Defense narrative — 핵심 message
+### 21.4 Defense narrative — 핵심 message
 
 1. **Paper-spec faithful implementation** (algorithm + channel + SE formula).
 2. **Paper claim 의 enabling condition 정량 식별**: τ_p_design > chromatic.
@@ -1326,8 +1327,8 @@ bootstrap CI (B=1000).
 
 ## 22. E4 unified common-ground benchmark (2026-06-04)
 
-`NEXT_STEPS_AGENT_PLAN.md` 에서 missing 으로 남아 있던 *common-ground unified environment*
-를 실제로 수행했다. 이 환경은 Gao original 도 Mussbah original 도 아니다. 목적은 두 paper 의
+이전에 missing 으로 남아 있던 *common-ground unified environment* 를 실제로 수행했다. 이
+환경은 Gao original 도 Mussbah original 도 아니다. 목적은 두 paper 의
 system model 차이를 인정한 뒤, 모든 9 schemes 를 같은 multi-antenna 환경에서 평가하는 것.
 
 ### 22.1 E4 spec
