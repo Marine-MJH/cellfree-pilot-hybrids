@@ -1,6 +1,6 @@
 """Build presentation-ready figures with reduced references and stable labels.
 
-This script does not rerun simulations. It reads common-ground presentation
+This script does not rerun simulations. It reads same-environment presentation
 artifacts and replots the main deck figures with slide-ready method names.
 """
 
@@ -15,9 +15,24 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIG_DIR = PROJECT_ROOT / "figures"
+OUT_DIR = FIG_DIR / "presentation_6method"
 
 MAIN_SETUP = FIG_DIR / "presentation_main_setup_main_beam20_wt10.csv"
 K_SWEEP = FIG_DIR / "presentation_k_sweep_common_50x10_summary.csv"
+LOAD_CROSSOVER = FIG_DIR / "presentation_load_crossover_6method_50x10_summary.csv"
+MJH_WITH_GAO = (
+    PROJECT_ROOT
+    / "MJH"
+    / "result_200_boxplot_ap_domain_env_fixed_with_gao_parallel8"
+    / "sweep_K_all_schemes.csv"
+)
+MJH_MUSSBAH_EDGE0 = (
+    PROJECT_ROOT
+    / "MJH"
+    / "result_200_boxplot_ap_domain_env_fixed_mussbah_edge0_parallel8"
+    / "sweep_K_all_schemes.csv"
+)
+PRESENTATION_SIX_CSV = OUT_DIR / "presentation_mjh_6method_k_sweep.csv"
 
 
 METHODS = [
@@ -25,7 +40,7 @@ METHODS = [
         "scheme": "Random",
         "label": "Random",
         "role": "Reference",
-        "color": "#707070",
+        "color": "#8a8a8a",
         "linestyle": "-",
     },
     {
@@ -33,13 +48,13 @@ METHODS = [
         "label": "Gao Matching",
         "role": "Reference",
         "color": "#1f78b4",
-        "linestyle": "-",
+        "linestyle": ":",
     },
     {
         "scheme": "Mussbah",
         "label": "Mussbah Beam Graph",
         "role": "Reference",
-        "color": "#ff7f00",
+        "color": "#009e73",
         "linestyle": "-",
     },
     {
@@ -60,7 +75,7 @@ METHODS = [
         "scheme": "MJH beam-resource matching",
         "label": "Beam-Resource Matching",
         "role": "Proposed",
-        "color": "#5e3c99",
+        "color": "#7b3294",
         "linestyle": "--",
     },
 ]
@@ -70,7 +85,7 @@ K_SWEEP_METHODS = [
         "scheme": "Random",
         "label": "Random",
         "role": "Reference",
-        "color": "#707070",
+        "color": "#8a8a8a",
         "linestyle": "-",
     },
     {
@@ -78,13 +93,13 @@ K_SWEEP_METHODS = [
         "label": "Gao Matching",
         "role": "Reference",
         "color": "#1f78b4",
-        "linestyle": "-",
+        "linestyle": ":",
     },
     {
         "scheme": "Mussbah",
         "label": "Mussbah Beam Graph",
         "role": "Reference",
-        "color": "#ff7f00",
+        "color": "#009e73",
         "linestyle": "-",
     },
     {
@@ -105,8 +120,65 @@ K_SWEEP_METHODS = [
         "scheme": "MJH beam-resource matching",
         "label": "Beam-Resource Matching",
         "role": "Proposed",
-        "color": "#5e3c99",
+        "color": "#7b3294",
         "linestyle": "--",
+    },
+]
+
+PRESENTATION_SIX_METHODS = [
+    {
+        "source": "base",
+        "scheme": "Random",
+        "method_id": "random",
+        "label": "Random",
+        "color": "#6f6f6f",
+        "linestyle": "-",
+        "linewidth": 2.4,
+    },
+    {
+        "source": "base",
+        "scheme": "GaoMatching",
+        "method_id": "gao",
+        "label": "Gao Matching",
+        "color": "#1f78b4",
+        "linestyle": ":",
+        "linewidth": 2.0,
+    },
+    {
+        "source": "mussbah",
+        "scheme": "Proposed",
+        "method_id": "mussbah",
+        "label": "Mussbah Beam Graph",
+        "color": "#009e73",
+        "linestyle": "-.",
+        "linewidth": 2.2,
+    },
+    {
+        "source": "base",
+        "scheme": "H3TopAPAdaptive",
+        "method_id": "topn",
+        "label": "AP-Top-N (N=8)",
+        "color": "#e7298a",
+        "linestyle": "--",
+        "linewidth": 2.4,
+    },
+    {
+        "source": "base",
+        "scheme": "Proposed",
+        "method_id": "beam_weighted",
+        "label": "Beam-Weighted Threshold",
+        "color": "#d95f02",
+        "linestyle": "--",
+        "linewidth": 2.4,
+    },
+    {
+        "source": "base",
+        "scheme": "MatchingBeamAdaptive",
+        "method_id": "beam_resource",
+        "label": "Beam-Resource Matching",
+        "color": "#7b3294",
+        "linestyle": "--",
+        "linewidth": 2.4,
     },
 ]
 
@@ -155,7 +227,7 @@ def plot_pilot_box(setup: pd.DataFrame) -> None:
     ax.legend(loc="upper right", fontsize=8)
     add_group_divider(ax)
     fig.tight_layout()
-    fig.savefig(FIG_DIR / "presentation_clean_pilot_box.png", dpi=220)
+    fig.savefig(OUT_DIR / "presentation_clean_pilot_box.png", dpi=220)
     plt.close(fig)
 
 def plot_k_sweep(k_sweep: pd.DataFrame, metric: str, ylabel: str, title: str, out_name: str) -> None:
@@ -165,70 +237,150 @@ def plot_k_sweep(k_sweep: pd.DataFrame, metric: str, ylabel: str, title: str, ou
         sub = k_sweep[k_sweep["scheme"] == scheme].sort_values("K")
         if sub.empty:
             continue
+        linewidth = 3.2 if scheme == "Random" else 1.8 if scheme == "Gao matching" else 2.5
+        markersize = 5.8 if scheme not in {"Random", "Gao matching"} else 5.0
+        alpha = 0.92 if scheme != "Gao matching" else 0.85
         ax.plot(
             sub["K"],
             sub[metric],
             marker="o",
-            markersize=5.5,
-            linewidth=2.4 if method["role"] == "Proposed" else 2.0,
+            markersize=markersize,
+            linewidth=linewidth,
             color=method["color"],
             linestyle=method["linestyle"],
+            alpha=alpha,
             label=method["label"],
         )
     ax.set_xlabel("Number of users K")
     ax.set_ylabel(ylabel)
     ax.set_title(title, fontsize=12, pad=6)
     ax.set_xticks(sorted(k_sweep["K"].unique()))
-    ax.axvspan(39.5, max(k_sweep["K"]) + 0.5, color="#f2f2f2", zorder=0)
-    ylim = ax.get_ylim()
-    ax.text(
-        40.0,
-        ylim[0] + 0.08 * (ylim[1] - ylim[0]),
-        "higher-load region",
-        fontsize=8,
-        color="#555555",
-        ha="left",
-        va="bottom",
-    )
     ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=7.5, loc="best")
+    ax.legend(fontsize=7.5, loc="best", framealpha=0.92)
     fig.tight_layout(pad=0.7)
-    fig.savefig(FIG_DIR / out_name, dpi=220)
+    fig.savefig(OUT_DIR / out_name, dpi=220)
+    plt.close(fig)
+
+
+def build_presentation_six_method_sweep() -> pd.DataFrame:
+    base = pd.read_csv(MJH_WITH_GAO)
+    mussbah = pd.read_csv(MJH_MUSSBAH_EDGE0)
+    frames = []
+
+    for method in PRESENTATION_SIX_METHODS:
+        source = base if method["source"] == "base" else mussbah
+        sub = source[source["scheme"] == method["scheme"]].copy()
+        if sub.empty:
+            raise ValueError(f"Missing scheme {method['scheme']} in {method['source']} source")
+        sub.insert(1, "method_id", method["method_id"])
+        sub.insert(2, "label", method["label"])
+        frames.append(sub)
+
+    combined = pd.concat(frames, ignore_index=True)
+    combined.to_csv(PRESENTATION_SIX_CSV, index=False)
+    return combined
+
+
+def plot_presentation_six_sweep(
+    sweep: pd.DataFrame,
+    metric: str,
+    ylabel: str,
+    title: str,
+    out_name: str,
+) -> None:
+    fig, ax = plt.subplots(figsize=(9.8, 4.0))
+    for method in PRESENTATION_SIX_METHODS:
+        sub = sweep[sweep["method_id"] == method["method_id"]].sort_values("K")
+        if sub.empty:
+            continue
+        ax.plot(
+            sub["K"],
+            sub[metric],
+            marker="o",
+            markersize=5.3,
+            linewidth=method["linewidth"],
+            color=method["color"],
+            linestyle=method["linestyle"],
+            alpha=0.94,
+            label=method["label"],
+        )
+    ax.set_xlabel("Number of users K")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title, fontsize=12, pad=6)
+    ax.set_xticks(sorted(sweep["K"].unique()))
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=7.2, loc="best", framealpha=0.92, ncols=2)
+    fig.tight_layout(pad=0.7)
+    fig.savefig(OUT_DIR / out_name, dpi=240)
     plt.close(fig)
 
 
 def main() -> None:
-    for path in [MAIN_SETUP, K_SWEEP]:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    for path in [K_SWEEP, LOAD_CROSSOVER, MJH_WITH_GAO, MJH_MUSSBAH_EDGE0]:
         if not path.exists():
             raise FileNotFoundError(
-                f"{path} not found. Run experiments/run_presentation_k_sweep_common_50x10.sh first."
+                f"{path} not found. Run the corresponding presentation experiment script first."
             )
 
-    setup = pd.read_csv(MAIN_SETUP)
     k_sweep = pd.read_csv(K_SWEEP)
+    load_crossover = pd.read_csv(LOAD_CROSSOVER)
 
-    plot_pilot_box(setup)
     plot_k_sweep(
         k_sweep,
         metric="mean_se",
         ylabel="Average SE [bit/s/Hz/user]",
-        title="Common-ground SE under increasing user load",
+        title="Same-environment SE under increasing user load",
         out_name="presentation_clean_k_sweep_se.png",
     )
     plot_k_sweep(
         k_sweep,
         metric="mean_ee",
         ylabel="Average EE [bit/s/Hz/W]",
-        title="Common-ground EE under increasing user load",
+        title="Same-environment EE under increasing user load",
         out_name="presentation_clean_k_sweep_ee.png",
+    )
+    plot_k_sweep(
+        load_crossover,
+        metric="mean_se",
+        ylabel="Average SE [bit/s/Hz/user]",
+        title="Average SE under increasing user load",
+        out_name="presentation_clean_load_crossover_se.png",
+    )
+
+    presentation_six = build_presentation_six_method_sweep()
+    plot_presentation_six_sweep(
+        presentation_six,
+        metric="avgSE",
+        ylabel="Average SE [bit/s/Hz/user]",
+        title="Average SE under increasing user load",
+        out_name="presentation_clean_load_crossover_se.png",
+    )
+    plot_presentation_six_sweep(
+        presentation_six,
+        metric="avgEE",
+        ylabel="Average EE [bit/s/Hz/W]",
+        title="Energy efficiency under increasing user load",
+        out_name="presentation_clean_load_crossover_ee.png",
+    )
+    plot_presentation_six_sweep(
+        presentation_six,
+        metric="avgTauP",
+        ylabel=r"Average actual pilot count $\tau_p$",
+        title="Average pilot count under increasing user load",
+        out_name="presentation_clean_pilot_count_vs_k.png",
     )
 
     for name in [
-        "presentation_clean_pilot_box.png",
+        "presentation_clean_pilot_count_vs_k.png",
         "presentation_clean_k_sweep_se.png",
         "presentation_clean_k_sweep_ee.png",
+        "presentation_clean_load_crossover_se.png",
+        "presentation_clean_load_crossover_ee.png",
+        "presentation_mjh_6method_k_sweep.csv",
     ]:
-        print(FIG_DIR / name)
+        print(OUT_DIR / name)
 
 
 if __name__ == "__main__":

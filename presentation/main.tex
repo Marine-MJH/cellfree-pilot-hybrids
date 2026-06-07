@@ -360,7 +360,7 @@
                 \item Do not use it as the final multi-antenna benchmark.
             \end{tightitemize}
 
-            \envnote{Environment: Gao reproduction setting; different from the common-ground multi-antenna results.}
+            \envnote{Environment: Gao reproduction setting; different from the same-environment multi-antenna results.}
         \end{column}
         \begin{column}{0.56\textwidth}
             \centering
@@ -483,20 +483,26 @@
 % ----------------------------------------------------------------
 \section{Results}
 
-\begin{frame}{Main Result: SE Under User Load}
+\begin{frame}{Main Result: User Load Sweep}
     \small
     \centering
-    \includegraphics[width=0.90\linewidth,height=0.56\textheight,keepaspectratio]{presentation_clean_k_sweep_se.png}
+    \includegraphics[width=0.90\linewidth,height=0.51\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_se.png}
 
-    \vspace{0.15em}
+    \vspace{0.05em}
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.47\textwidth}
             \scriptsize
-            \textbf{Environment:} $K=30,40,50,60,70$, $L=200$, $N=8$, $\tauc=150$, $\taup^{design}=15$, 50 setups $\times$ 10 channel samples, MC SE.
+            \textbf{Environment:} $K=25,\ldots,50$, $L=200$, $N=8$, $\tauc=150$, $\taup^{design}=15$, 200 setups.
         \end{column}
         \begin{column}{0.49\textwidth}
             \scriptsize
-            \textbf{Interpretation:} update after the common-ground K-sweep output is generated.
+            \textbf{Result}
+            \begin{tightitemize}
+                \item Gao stays near Random.
+                \item Top-N and Resource stay above Random through $K=50$.
+                \item Beam-Weighted crosses below Random from $K=40$.
+                \item At $K=50$: Resource $+6.66\%$, Top-N $+5.35\%$, Mussbah $-23.24\%$.
+            \end{tightitemize}
         \end{column}
     \end{columns}
 \end{frame}
@@ -508,51 +514,35 @@
     \small
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.44\textwidth}
-            \textbf{Common-ground snapshot}
+            \textbf{Same-environment K-sweep}
             \vspace{0.2em}
 
             \scriptsize
-            $K=50$, $L=200$, $N=8$, $\tauc=150$, $\taup^{design}=15$, 200 setups $\times$ 20 channel samples.
-
-            \normalsize
-            \begin{center}
-                \scriptsize
-                \resizebox{\linewidth}{!}{%
-                    \begin{tabular}{lccc}
-                        \toprule
-                        Method                  & $\bar{\tau}_{p}$ & prelog ratio & SE gain  \\
-                        \midrule
-                        Random                  & 14.94            & baseline     & baseline \\
-                        Beam-Weighted Threshold & 3.23             & +8.67\%      & +8.53\%  \\
-                        Beam-Resource Matching  & 4.46             & +7.76\%      & +7.80\%  \\
-                        AP-Top-N (N=8)          & 7.90             & +5.21\%      & +5.28\%  \\
-                        \bottomrule
-                    \end{tabular}
-                }
-            \end{center}
+            $K=25,\ldots,50$, $L=200$, $N=8$, $\tauc=150$, $\taup^{design}=15$, 200 setups.
 
             \vspace{0.5em}
             \textbf{Reading}
             \begin{tightitemize}
-                \item Fewer pilots improve the prelog factor.
-                \item Too much pruning can damage SINR under high load.
-                \item The useful target is balance, not the minimum possible pilot count.
+                \item Random and Gao stay fixed at $\taup=15$.
+                \item Mussbah grows from $23.7$ to $45.8$ pilots as load increases.
+                \item AP-Top-N and Beam-Resource stay below the design pilot budget.
+                \item Beam-Weighted crosses the budget under heavier load.
             \end{tightitemize}
         \end{column}
         \begin{column}{0.52\textwidth}
             \centering
-            \includegraphics[width=\linewidth,height=0.64\textheight,keepaspectratio]{presentation_clean_pilot_box.png}
+            \includegraphics[width=\linewidth,height=0.64\textheight,keepaspectratio]{presentation_6method/presentation_clean_pilot_count_vs_k.png}
         \end{column}
     \end{columns}
 \end{frame}
 
 % ----------------------------------------------------------------
-% 10. Energy efficiency
+% 11. Energy efficiency
 % ----------------------------------------------------------------
 \begin{frame}{Energy Efficiency Under User Load}
     \small
     \centering
-    \includegraphics[width=0.90\linewidth,height=0.56\textheight,keepaspectratio]{presentation_clean_k_sweep_ee.png}
+    \includegraphics[width=0.90\linewidth,height=0.56\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_ee.png}
 
     \vspace{0.15em}
     \begin{columns}[T,onlytextwidth]
@@ -562,51 +552,57 @@
         \end{column}
         \begin{column}{0.49\textwidth}
             \scriptsize
-            \textbf{Interpretation:} update after the common-ground K-sweep output is generated.
+            \textbf{Result}
+            \begin{tightitemize}
+                \item Beam-Resource Matching stays highest across the sweep.
+                \item At $K=50$: Resource $+12.35\%$, AP-Top-N $+5.29\%$.
+                \item Mussbah loses EE under load as its pilot count grows.
+            \end{tightitemize}
         \end{column}
     \end{columns}
 \end{frame}
 
 % ----------------------------------------------------------------
-% 11. Conclusion
+% 12. Conclusion
 % ----------------------------------------------------------------
 \section{Conclusion}
 
 \begin{frame}{Conclusion}
     \small
     \begin{center}
-        \large
+        \normalsize
         \textbf{Pilot assignment is a balance problem.}\\
-        \vspace{0.15em}
+        \vspace{0.10em}
         \textbf{Prune enough to reduce pilots, but not enough to destroy SINR.}
     \end{center}
 
-    \vspace{0.45em}
+    \vspace{0.25em}
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.48\textwidth}
+            \scriptsize
             \textbf{What we can defend}
             \begin{tightitemize}
-                \item Gao gives a useful reproduction anchor.
-                \item Multiple proposed methods sparsify conflicts.
-                \item Common-ground K-sweep will supply the final load-dependent result.
-                \item Beam-Resource Matching is the most robust current direction.
+                \item Beam-Resource and AP-Top-N keep positive SE and EE margins.
+                \item Beam-Weighted crossover shows pilot-budget control matters.
+                \item Gao is a reproduction anchor, not the main winner here.
             \end{tightitemize}
         \end{column}
         \begin{column}{0.48\textwidth}
+            \scriptsize
             \textbf{What we should not oversell}
             \begin{tightitemize}
                 \item Fewer pilots are not always better.
-                \item $\taup=1$ is not the design conclusion.
-                \item Cross-environment absolute SE should not be mixed.
+                \item $\taup=3$ stress is diagnostic.
+                \item SE gain is not direct evidence of higher SINR.
                 \item EE is a simplified proxy.
             \end{tightitemize}
         \end{column}
     \end{columns}
 
-    \vspace{0.55em}
+    \vspace{0.35em}
     \begin{center}
-        \normalsize
-        \textbf{Final claim:} good UE clustering and AP/beam pruning should balance SINR preservation against pilot-count reduction.
+        \footnotesize
+        \textbf{Final claim:} adaptive pilot assignment is useful when it cuts pilot overhead without visibly sacrificing SINR.
     \end{center}
 \end{frame}
 
@@ -616,68 +612,16 @@
 \appendix
 \section{Backup}
 
-\begin{frame}{Backup: Closed-Form Environment And Load Sensitivity}
-    \small
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.48\textwidth}
-            \textbf{Separate closed-form environment}
-            \begin{tightitemize}
-                \item $K=30$, $L=100$, $N=8$.
-                \item $\tauc=100$, $\taup^{design}=10$.
-                \item 200 setups.
-                \item Closed-form MMSE+MRC SE.
-            \end{tightitemize}
-
-            \vspace{0.45em}
-            \begin{center}
-                \scriptsize
-                \begin{tabular}{lcc}
-                    \toprule
-                    Method                  & mean SE        & $\bar{\tau}_p$ \\
-                    \midrule
-                    Random                  & 3.171          & 10.00          \\
-                    AP-Top-N (N=8)          & 3.224          & 8.34           \\
-                    Beam-Weighted Threshold & 3.233          & 7.42           \\
-                    Beam-Resource Matching  & \textbf{3.335} & \textbf{4.59}  \\
-                    \bottomrule
-                \end{tabular}
-            \end{center}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \textbf{Closed-form K-sweep}
-            \begin{center}
-                \scriptsize
-                \begin{tabular}{rccc}
-                    \toprule
-                    K  & AP-Top-N & Weighted & Resource matching \\
-                    \midrule
-                    25 & +2.77\% & +2.99\%  & \textbf{+5.66\%} \\
-                    30 & +1.68\% & +1.96\%  & \textbf{+5.18\%} \\
-                    35 & +0.57\% & +1.19\%  & \textbf{+4.76\%} \\
-                    40 & -0.42\% & +0.15\%  & \textbf{+4.16\%} \\
-                    45 & -1.42\% & -0.51\%  & \textbf{+3.81\%} \\
-                    \bottomrule
-                \end{tabular}
-            \end{center}
-
-            \begin{tightitemize}
-                \item AP-domain Top-N weakens as load grows.
-                \item Beam-Resource Matching remains strongest in this sweep.
-            \end{tightitemize}
-        \end{column}
-    \end{columns}
-\end{frame}
-
 \begin{frame}{Backup: Graph Consistency Rules}
     \small
     \begin{tightenumerate}
-        \item Use common-ground MC figures for the main ranking.
+        \item Use same-environment MC figures for the main ranking.
         \item Use method names, not person-specific labels.
         \item Use only Random, Gao Matching, and Mussbah Beam Graph as main references.
         \item Use Gao reproduction only as a small-pilot reproduction anchor.
         \item Say ``EE proxy'' for the current EE plots.
-        \item Do not claim user-load crossover unless the common-ground K-sweep shows it.
-        \item Add bootstrap CI for the final 12-scheme run before using significance language.
+        \item Claim crossover only for the methods that actually cross in the final six-method plot.
+        \item Add bootstrap CI before using significance language.
     \end{tightenumerate}
 \end{frame}
 
