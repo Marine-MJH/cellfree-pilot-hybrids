@@ -34,6 +34,8 @@ figures/sweep_taup_raw_*.csv
 
 # Paper PDFs are local references, not repository assets
 *.pdf
+# ...except the presentation deck PDF (final deliverable)
+!presentation/*.pdf
 
 # LaTeX compile artifacts
 *.aux

@@ -1,7 +1,7 @@
 """Build presentation-ready figures with reduced references and stable labels.
 
-This script does not rerun simulations. It reads the final CSV artifacts and
-replots the main deck figures with the method names used in the slide deck.
+This script does not rerun simulations. It reads common-ground presentation
+artifacts and replots the main deck figures with slide-ready method names.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIG_DIR = PROJECT_ROOT / "figures"
 
 MAIN_SETUP = FIG_DIR / "presentation_main_setup_main_beam20_wt10.csv"
-K_SWEEP = PROJECT_ROOT / "MJH" / "result_final_w2_1_1_thr10_full_200" / "sweep_K_all_schemes.csv"
+K_SWEEP = FIG_DIR / "presentation_k_sweep_common_50x10_summary.csv"
 
 
 METHODS = [
@@ -44,7 +44,7 @@ METHODS = [
     },
     {
         "scheme": "Hybrid#3 (TopAP N=8 adaptive)",
-        "label": "AP-Top8 Adaptive",
+        "label": "AP-Top-N (N=8)",
         "role": "Proposed",
         "color": "#e7298a",
         "linestyle": "--",
@@ -74,21 +74,35 @@ K_SWEEP_METHODS = [
         "linestyle": "-",
     },
     {
-        "scheme": "H3TopAPAdaptive",
-        "label": "AP-Top8 Adaptive",
+        "scheme": "Gao matching",
+        "label": "Gao Matching",
+        "role": "Reference",
+        "color": "#1f78b4",
+        "linestyle": "-",
+    },
+    {
+        "scheme": "Mussbah",
+        "label": "Mussbah Beam Graph",
+        "role": "Reference",
+        "color": "#ff7f00",
+        "linestyle": "-",
+    },
+    {
+        "scheme": "Hybrid#3 (TopAP N=8 adaptive)",
+        "label": "AP-Top-N (N=8)",
         "role": "Proposed",
         "color": "#e7298a",
         "linestyle": "--",
     },
     {
-        "scheme": "Proposed",
+        "scheme": "MJH weighted-count strict",
         "label": "Beam-Weighted Threshold",
         "role": "Proposed",
         "color": "#d95f02",
         "linestyle": "--",
     },
     {
-        "scheme": "MatchingBeamAdaptive",
+        "scheme": "MJH beam-resource matching",
         "label": "Beam-Resource Matching",
         "role": "Proposed",
         "color": "#5e3c99",
@@ -186,7 +200,9 @@ def plot_k_sweep(k_sweep: pd.DataFrame, metric: str, ylabel: str, title: str, ou
 def main() -> None:
     for path in [MAIN_SETUP, K_SWEEP]:
         if not path.exists():
-            raise FileNotFoundError(path)
+            raise FileNotFoundError(
+                f"{path} not found. Run experiments/run_presentation_k_sweep_common_50x10.sh first."
+            )
 
     setup = pd.read_csv(MAIN_SETUP)
     k_sweep = pd.read_csv(K_SWEEP)
@@ -194,16 +210,16 @@ def main() -> None:
     plot_pilot_box(setup)
     plot_k_sweep(
         k_sweep,
-        metric="avgSE",
+        metric="mean_se",
         ylabel="Average SE [bit/s/Hz/user]",
-        title="SE under increasing user load",
+        title="Common-ground SE under increasing user load",
         out_name="presentation_clean_k_sweep_se.png",
     )
     plot_k_sweep(
         k_sweep,
-        metric="avgEE",
-        ylabel="Average EE [bit/Joule/Hz]",
-        title="EE under increasing user load",
+        metric="mean_ee",
+        ylabel="Average EE [bit/s/Hz/W]",
+        title="Common-ground EE under increasing user load",
         out_name="presentation_clean_k_sweep_ee.png",
     )
 

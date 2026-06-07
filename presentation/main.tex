@@ -378,10 +378,10 @@
     \small
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.31\textwidth}
-            \textbf{AP-Top8 Adaptive}
+            \textbf{AP-Top-N Adaptive}
             \begin{tightitemize}
-                \item Strongest 8 APs per UE.
-                \item Conflict by shared Top-8 APs.
+                \item Strongest $N_{\mathrm{top}}$ APs per UE.
+                \item Conflict by shared Top-$N$ APs.
                 \item Adaptive graph coloring.
             \end{tightitemize}
 
@@ -392,7 +392,7 @@
                             minimum width=2.45cm, minimum height=0.58cm},
                     arr/.style={->, thick, >=Stealth}]
                 \node[box] (a) {large-scale fading};
-                \node[box, below=of a] (b) {Top-8 APs};
+                \node[box, below=of a] (b) {Top-$N$ APs};
                 \node[box, below=of b] (c) {AP-overlap graph};
                 \node[box, below=of c] (d) {adaptive pilots};
                 \draw[arr] (a) -- (b);
@@ -465,7 +465,7 @@
             Random                  & AP     & none                      & fixed       & reference  \\
             Gao Matching            & AP     & UE--AP matching           & fixed       & reference  \\
             Mussbah Beam Graph      & beam   & binary beam overlap       & adaptive    & reference  \\
-            AP-Top8 Adaptive        & AP     & Top-8 AP overlap          & adaptive    & proposed   \\
+            AP-Top-N Adaptive       & AP     & Top-$N$ AP overlap        & adaptive    & proposed   \\
             Beam-Weighted Threshold & beam   & weighted beam overlap     & adaptive    & proposed   \\
             Beam-Resource Matching  & beam   & AP-beam resource matching & adaptive    & proposed   \\
             \bottomrule
@@ -483,7 +483,7 @@
 % ----------------------------------------------------------------
 \section{Results}
 
-\begin{frame}{Main Result: User-Load Crossover in SE}
+\begin{frame}{Main Result: SE Under User Load}
     \small
     \centering
     \includegraphics[width=0.90\linewidth,height=0.56\textheight,keepaspectratio]{presentation_clean_k_sweep_se.png}
@@ -492,11 +492,11 @@
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.47\textwidth}
             \scriptsize
-            \textbf{Environment:} $K=25,\ldots,45$, $L=100$, $N=8$, $\tauc=100$, $\taup^{design}=10$, 200 setups, closed-form SE.
+            \textbf{Environment:} $K=30,40,50,60,70$, $L=200$, $N=8$, $\tauc=150$, $\taup^{design}=15$, 50 setups $\times$ 10 channel samples, MC SE.
         \end{column}
         \begin{column}{0.49\textwidth}
             \scriptsize
-            \textbf{Reading:} AP-Top8 and Beam-Weighted cross below Random at high load; Beam-Resource Matching remains positive at $K=45$ (\textbf{+3.81\%}).
+            \textbf{Interpretation:} update after the common-ground K-sweep output is generated.
         \end{column}
     \end{columns}
 \end{frame}
@@ -509,6 +509,12 @@
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.44\textwidth}
             \textbf{Common-ground snapshot}
+            \vspace{0.2em}
+
+            \scriptsize
+            $K=50$, $L=200$, $N=8$, $\tauc=150$, $\taup^{design}=15$, 200 setups $\times$ 20 channel samples.
+
+            \normalsize
             \begin{center}
                 \scriptsize
                 \resizebox{\linewidth}{!}{%
@@ -519,7 +525,7 @@
                         Random                  & 14.94            & baseline     & baseline \\
                         Beam-Weighted Threshold & 3.23             & +8.67\%      & +8.53\%  \\
                         Beam-Resource Matching  & 4.46             & +7.76\%      & +7.80\%  \\
-                        AP-Top8 Adaptive        & 7.90             & +5.21\%      & +5.28\%  \\
+                        AP-Top-N (N=8)          & 7.90             & +5.21\%      & +5.28\%  \\
                         \bottomrule
                     \end{tabular}
                 }
@@ -552,11 +558,11 @@
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.47\textwidth}
             \scriptsize
-            \textbf{Environment:} $L=100$, $N=8$, $\tauc=100$, $\taup^{design}=10$, 200 setups, closed-form SE/EE proxy.
+            \textbf{Environment:} same K-sweep as the SE slide; EE is a proxy using the same selected method set.
         \end{column}
         \begin{column}{0.49\textwidth}
             \scriptsize
-            \textbf{At $K=45$ vs Random:} Beam-Resource \textbf{+9.90\%}, Beam-Weighted \textbf{+5.39\%}, AP-Top8 \textbf{-1.41\%}.
+            \textbf{Interpretation:} update after the common-ground K-sweep output is generated.
         \end{column}
     \end{columns}
 \end{frame}
@@ -582,7 +588,7 @@
             \begin{tightitemize}
                 \item Gao gives a useful reproduction anchor.
                 \item Multiple proposed methods sparsify conflicts.
-                \item User-load crossover shows that pruning can overreach.
+                \item Common-ground K-sweep will supply the final load-dependent result.
                 \item Beam-Resource Matching is the most robust current direction.
             \end{tightitemize}
         \end{column}
@@ -630,7 +636,7 @@
                     Method                  & mean SE        & $\bar{\tau}_p$ \\
                     \midrule
                     Random                  & 3.171          & 10.00          \\
-                    AP-Top8 Adaptive        & 3.224          & 8.34           \\
+                    AP-Top-N (N=8)          & 3.224          & 8.34           \\
                     Beam-Weighted Threshold & 3.233          & 7.42           \\
                     Beam-Resource Matching  & \textbf{3.335} & \textbf{4.59}  \\
                     \bottomrule
@@ -643,7 +649,7 @@
                 \scriptsize
                 \begin{tabular}{rccc}
                     \toprule
-                    K  & AP-Top8 & Weighted & Resource matching \\
+                    K  & AP-Top-N & Weighted & Resource matching \\
                     \midrule
                     25 & +2.77\% & +2.99\%  & \textbf{+5.66\%} \\
                     30 & +1.68\% & +1.96\%  & \textbf{+5.18\%} \\
@@ -670,7 +676,7 @@
         \item Use only Random, Gao Matching, and Mussbah Beam Graph as main references.
         \item Use Gao reproduction only as a small-pilot reproduction anchor.
         \item Say ``EE proxy'' for the current EE plots.
-        \item Do not claim a $\taup=7$ optimum from the current tau sweep.
+        \item Do not claim user-load crossover unless the common-ground K-sweep shows it.
         \item Add bootstrap CI for the final 12-scheme run before using significance language.
     \end{tightenumerate}
 \end{frame}
