@@ -25,6 +25,13 @@ logs/*.done
 # Large local archive generated during cleanup
 .artifact_archive/
 
+# Smoke / sandbox figures (use specific suffixes for final results)
+figures/*_smoke*
+MJH/_smoke*/
+
+# Per-UE raw CSVs are too large for git; keep setup-level / summary CSVs only
+figures/sweep_taup_raw_*.csv
+
 # Paper PDFs are local references, not repository assets
 *.pdf
 

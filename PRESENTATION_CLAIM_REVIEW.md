@@ -1,156 +1,281 @@
-# 발표 Main Clause 검토 — "Fewer Pilots ⇒ Better SE"
+# 발표 Main Claim 검토 — Fewer Pilots 가 아니라 Right-Sized Pilot Overhead
 
-작성일: 2026-06-06
-대상: 미팅 결정 conclusion *"파일럿 수가 적을수록 성능이 좋아진다 (단, SINR 너무 떨어지지 않을 정도)"* 의 발표 main claim 으로서의 안전성 검토.
-
----
-
-## 1. Claim 정리
-
-미팅 결정 사항을 분해하면:
-
-| Element | 내용 |
-|---|---|
-| **(A) 관찰** | 우리 실험에서 active beam/AP 를 줄여서 τ_p 가 적어진 scheme 이 SE 가 더 높음 |
-| **(B) 메커니즘 가설** | SE = (τ_c − τ_p)/τ_c · log₂(1+SINR). τ_p ↓ → prelog ↑ → SE ↑ |
-| **(C) 단서** | 단, SINR 이 무너질 정도로 channel estimation 을 망가뜨리면 안 됨 |
-| **(D) 두 가지 구현 경로** | (i) AP-side SNR threshold (Mussbah/MJH 의 beam-detect SNR), (ii) UE-side Top-N AP 선택 (우리 TopAP family) |
-| **(E) 통합 해석** | (i), (ii) 모두 동일 효과: *active channel 수↓ → conflict graph sparser → chromatic τ_p ↓ → coherence block 안 data 영역↑* |
+작성일: 2026-06-07  
+대상: 발표 conclusion 후보인 "파일럿 수가 적을수록 성능이 좋아진다. 단, SINR 이 무너질 정도로 줄이면 안 된다"의 안전성 검토와 발표용 문장 정리.
 
 ---
 
-## 2. 실험 증거 — 이 claim 을 지지하는가?
+## 0. 결론
 
-### 2.1 본 발표 핵심 결과 (`presentation_main_compare.py`, 200×20, beam-detect=20 dB, weighted-thr=10)
+원문 claim 은 **방향은 맞지만 그대로 말하면 과장**입니다.
 
-| Scheme | τ_p_actual | Mean SE | vs Random | EE (proxy) |
+발표에서 써야 할 표현:
+
+> **Reduced-but-sufficient active set 을 만들면 conflict graph 가 sparse 해지고, 실제 필요한 pilot 수가 줄어 coherence block 안의 data 전송 비율이 커진다. 본 실험 범위에서는 이 prelog gain 이 SINR 손실보다 커서 SE/EE 가 개선됐다.**
+
+금지해야 할 표현:
+
+> "파일럿 수가 적을수록 무조건 좋다."
+
+이 표현은 바로 공격받습니다. `tau_p=1`이면 왜 더 좋지 않냐는 질문이 나오고, fixed `tau_p`에서 성능이 안 좋은 scheme도 있기 때문입니다.
+
+---
+
+## 1. Claim 을 정확히 분해
+
+| 요소 | 발표에서 말할 내용 | 상태 |
+|---|---|---|
+| 관찰 | adaptive scheme 중 실제 `tau_p_actual` 이 낮은 쪽이 mean SE/EE 에서 강함 | 확인됨 |
+| 메커니즘 | `SE = (1 - tau_p/tau_c) log2(1 + SINR_eff)` 이므로 `tau_p` 감소는 data prelog 를 키움 | 수식상 명확 |
+| 단서 | active AP/beam 을 너무 줄이면 estimation/SINR 손실이 prelog gain 을 넘을 수 있음 | 반드시 말해야 함 |
+| 구현 경로 A | AP/beam-side filtering: beam-detect SNR, weighted beam threshold, beam-resource matching | MJH 계열 |
+| 구현 경로 B | UE-side filtering: Top-N AP, TopAP conflict graph, Hybrid#3 | 우리 계열 |
+| 통합 해석 | 둘 다 "effective serving/conflict graph sparsification" 으로 볼 수 있음 | [Inference] |
+
+정확한 한 문장:
+
+> **The key lever is not blindly minimizing pilot count, but selecting a sparse enough active set that reduces pilot overhead while preserving enough channel quality.**
+
+---
+
+## 2. 숫자로 보는 근거
+
+### 2.1 우리 발표 환경
+
+Source: [`figures/presentation_main_summary_main_beam20_wt10.csv`](figures/presentation_main_summary_main_beam20_wt10.csv)  
+환경: K=50, L=200, N=8, `tau_c=150`, `tau_p_design=15`, beam-detect=20 dB, weight-threshold=10, 200 setups x 20 channel samples.
+
+| Scheme | Mean SE | vs Random | P5 SE | Mean `tau_p_actual` | EE proxy | 핵심 해석 |
+|---|---:|---:|---:|---:|---:|---|
+| Random | 5.375 | 0.00% | 1.142 | 14.94 | 1.440 | fixed-budget baseline |
+| Mussbah / weighted default | 5.697 | +5.99% | 1.238 | 6.93 | 2.199 | SNR filtering 으로 sparse graph |
+| **MJH weighted-count strict** | **5.833** | **+8.53%** | 1.220 | **3.23** | **2.252** | 가장 aggressive 한 pilot reduction |
+| **MJH beam-resource matching** | **5.794** | **+7.80%** | **1.240** | **4.46** | 2.237 | tail SE 까지 가장 안정적 |
+| **Hybrid#3 TopAP adaptive** | 5.659 | +5.28% | 1.236 | 7.90 | 1.718 | UE-side Top-N 으로 같은 방향 |
+| TopAP bisect | 5.377 | +0.05% | 1.147 | 14.91 | 1.465 | pilot 수를 못 줄이면 SE gain 도 거의 없음 |
+
+**핵심 관찰**:
+
+- `tau_p_actual` 이 15 근처인 fixed/bisect 계열은 mean SE 가 Random 근처에 머뭅니다.
+- `tau_p_actual` 이 3-8 수준으로 내려간 adaptive 계열은 mean SE 가 +5-9% 올라갑니다.
+- P5 SE 도 adaptive 계열이 Random보다 낮아지지 않았습니다. 즉 이 환경에서는 pruning 이 tail user 를 크게 희생하지 않았습니다.
+
+주의:
+
+- 이 표만으로 "pilot count 단독 인과"를 증명한 것은 아닙니다.
+- 다만 prelog ratio 와 measured SE gain 이 거의 맞아떨어져, pilot overhead 가 dominant factor 라는 해석은 강합니다.
+
+### 2.2 MJH 환경
+
+Source: [`MJH/result_final_w2_1_1_thr10_full_200/sweep_K_all_schemes.csv`](MJH/result_final_w2_1_1_thr10_full_200/sweep_K_all_schemes.csv)  
+환경: L=100, N=8, `tau_c=100`, `tau_p_design=10`, full power, closed-form SE, 200 setups.
+
+K=30 기준:
+
+| Scheme | Mean SE | vs Random | P5 SE | Mean `tau_p_actual` | EE | 핵심 해석 |
+|---|---:|---:|---:|---:|---:|---|
+| Random | 3.171 | 0.00% | 0.774 | 10.00 | 1.040 | fixed baseline |
+| H3 TopAP adaptive | 3.224 | +1.68% | 0.774 | 8.34 | 1.058 | small pilot reduction |
+| Proposed weighted-threshold | 3.233 | +1.96% | 0.781 | 7.42 | 1.128 | beam weighted threshold |
+| **MatchingBeamAdaptive** | **3.335** | **+5.18%** | **0.802** | **4.59** | **1.163** | strongest adaptive reduction |
+| MatchingBeamFixed | 3.142 | -0.92% | 0.758 | 10.00 | 1.097 | fixed pilot이면 matching 자체는 SE 우위가 아님 |
+
+K-sweep:
+
+| K | Random SE | H3 SE / tau | Proposed SE / tau | MatchingAdaptive SE / tau |
+|---:|---:|---:|---:|---:|
+| 25 | 3.283 | 3.374 / 7.43 | 3.381 / 6.64 | **3.469 / 4.23** |
+| 30 | 3.171 | 3.224 / 8.34 | 3.233 / 7.42 | **3.335 / 4.59** |
+| 35 | 3.051 | 3.069 / 9.37 | 3.088 / 8.24 | **3.196 / 5.10** |
+| 40 | 2.937 | 2.925 / 10.24 | 2.942 / 9.03 | **3.059 / 5.45** |
+| 45 | 2.889 | 2.848 / 11.18 | 2.875 / 9.67 | **2.999 / 5.81** |
+
+**핵심 관찰**:
+
+- MatchingBeamAdaptive 는 K=25-45 전체에서 가장 낮은 `tau_p_actual` 과 가장 높은 SE 를 같이 보입니다.
+- H3 TopAP 은 K 가 커지면 `tau_p_actual` 이 10을 넘고, 그때 SE advantage 도 사라집니다.
+- Proposed weighted-threshold 는 K=45에서 `tau_p_actual=9.67`로 pilot gain 이 거의 없어지고 SE도 Random보다 낮습니다.
+
+따라서 결론은 "적을수록 좋다"가 아니라 **active-set sparsification 이 충분히 강해서 `tau_p_actual` 을 실제로 낮출 때만 이득이 난다**입니다.
+
+---
+
+## 3. Prelog 로 보는 메커니즘
+
+기본식:
+
+```text
+SE_k = (1 - tau_p_actual / tau_c) log2(1 + SINR_eff,k)
+```
+
+### 3.1 우리 환경, `tau_c=150`
+
+| Scheme | Mean `tau_p_actual` | Prelog | Prelog vs Random | Observed mean SE vs Random |
 |---|---:|---:|---:|---:|
-| Random / GC / Structured (τ_p=15 고정) | 15 | ≈ 5.04 | 0% | 1× |
-| Mussbah (binary adjacency, β-detect=20) | ~7 | ≈ 5.37 | **+6.5%** | **~2.07×** |
-| MJH weighted-count strict (thr=10) | **~4** | ≈ 5.37 | **+6.5%** | ~2.07× |
-| MJH **beam-resource matching** | **~5** | ≈ 5.38 | **+6.8%** | **~2.08×** |
-| Hybrid#3 (TopAP N=8 adaptive) | **~8** | ≈ 5.32 | **+5.5%** | ~1.62× |
-| TopAP bisect (τ_p ≤ 15) | ~15 | ≈ 4.97 | -1.4% | 1.0× |
+| Random | 14.94 | 0.900 | 0.00% | 0.00% |
+| MJH weighted-count strict | 3.23 | 0.979 | +8.67% | +8.53% |
+| MJH beam-resource matching | 4.46 | 0.970 | +7.76% | +7.80% |
+| Hybrid#3 | 7.90 | 0.947 | +5.21% | +5.28% |
 
-> (구체 수치는 200×20 run 결과로 업데이트 예정)
+이 표가 발표의 가장 강한 메커니즘 근거입니다. 관측 SE gain 이 prelog gain 과 거의 같은 크기입니다.
 
-**관찰**:
+[Inference] 이 환경에서는 pilot reduction 으로 얻은 prelog gain 이 SINR 손실보다 컸고, SINR 변화는 1차 효과가 아니었을 가능성이 큽니다.
 
-- τ_p ↓ 와 mean SE ↑ 사이에 **양의 상관관계** 가 일관되게 관측됨.
-- AP-side(Mussbah/MJH) 경로와 UE-side(Hybrid#3) 경로 모두 동일 방향의 효과를 보임 → claim (D), (E) 부분 empirically 지지.
-- TopAP bisect 는 τ_p 가 15 까지 차서 prelog gain 없음 → "τ_p 가 작아야 이득이 난다" 는 *necessity* 도 보임 (반례 보강).
+### 3.2 MJH 환경, `tau_c=100`, K=30
 
-### 2.2 SINR 측면 sanity check
+| Scheme | Mean `tau_p_actual` | Prelog | Prelog vs Random | Observed mean SE vs Random |
+|---|---:|---:|---:|---:|
+| Random | 10.00 | 0.900 | 0.00% | 0.00% |
+| MatchingBeamAdaptive | 4.59 | 0.954 | +6.01% | +5.18% |
+| Proposed weighted-threshold | 7.42 | 0.926 | +2.87% | +1.96% |
+| H3 TopAP adaptive | 8.34 | 0.917 | +1.85% | +1.68% |
 
-`mussbah_uplink_se` 에서 reported (active+moderate) beam 만 사용해 MMSE estimation + MRC combining. β-detect=20 dB 로 reported set 이 좁아지지만, 우리 K=50, L=200, N=8 환경에서 *충분히 dominant* 한 beam 만 골라내어 SINR 의 큰 손실 없음. P5 (5%-likely) SE 도 baseline 과 비슷한 수준 유지 (Random P5 ~0.83 vs MJH-resource-matching P5 ~0.82).
-
-⇒ **단서 (C) 는 본 환경에서 위반되지 않는다**.
-
----
-
-## 3. 이론적 일관성 검토
-
-### 3.1 SE = (1 − τ_p/τ_c) · log₂(1 + SINR_eff) 의 두 항 trade-off
-
-| τ_p ↓ 가 미치는 영향 | 부호 |
-|---|:---:|
-| Prelog (1 − τ_p/τ_c) | **+** |
-| Pilot contamination (적은 pilot ⇒ 더 많은 UE 가 같은 pilot 공유 ⇒ SINR ↓) | **−** |
-| Estimation MSE (training energy = ρ·τ_p, τ_p ↓ ⇒ MSE ↑ ⇒ SINR ↓) | **−** |
-
-**Main clause 가 성립하는 영역**: positive prelog gain 이 SINR 손실보다 큰 *parameter regime*.
-
-수치 예 (τ_c=150 기준):
-- τ_p: 15 → 8 ⇒ prelog: 0.900 → 0.947, 약 **+5.2% relative gain on prelog**
-- 동일 channel estimation quality 유지 가능하면 SE ≈ +5%, 우리 관측 +5~7% 와 일치.
-
-**Claim 이 깨지는 영역** (presentation 에서 *명시적으로 짚어야* 하는 caveat):
-- τ_c 가 작은 high-mobility 시나리오: τ_p=15 vs 8 차이가 더 큼 (e.g., τ_c=100 → 0.85 vs 0.92, +8.2%) → claim 강해짐 ✓
-- τ_c 가 매우 큰 indoor 시나리오 (τ_c=400): 0.96 vs 0.98, **+2%만 이득** → claim 약해짐
-- K/L 비율 (load) 이 높으면 same-pilot 충돌 inevitable → SINR 손실이 prelog gain 압도 → **claim 반전 가능**
-
-### 3.2 K, L 의 sensitivity
-
-본 환경: K=50, L=200 (load ratio 0.25). Mussbah paper 환경: K=10, L=100 (0.1). Gao paper: M=200, K=500 (0.4). 우리 결과는 *moderate load* 에서 잘 작동.
-
-**잠재적 반례**: K=200, L=200, N=8 같은 *heavy load* 시 τ_p < log₂(K/L) ≈ 0 → 어떤 algorithm 도 충돌 방지 불가 → "fewer pilots" 가 더 이상 작동 안 함.
-
-발표에서: "moderate load regime (K ≪ L·N) 에서 본 결과" 라고 못 박는 게 안전.
+여기도 같은 방향입니다. prelog gain 보다 measured gain 이 약간 작습니다. 이 차이는 [Inference] 같은 pilot reuse 증가, serving/beam pruning, estimation quality 변화가 가져온 SINR cost 로 해석할 수 있습니다.
 
 ---
 
-## 4. Main Clause 의 잠재 risk 와 대응
+## 4. 네 해석에 대한 검토
 
-### 4.1 위험 요소 정리
+사용자 해석:
 
-| # | 위험 | 본 발표에서의 노출도 | 권장 대응 |
+> AP에서 SNR의 데시벨로 유저를 거르든, UE에서 top-N개의 AP에만 연결하든, 효과는 채널의 숫자가 줄고, 이로 인해 파일럿 수가 줄어서 coherent block 안에 데이터를 담을 공간이 더 확보되어서 그런 결과가 나오는 것으로 보임.
+
+검토:
+
+| 항목 | 판정 | 다듬을 점 |
+|---|---|---|
+| AP/beam-side SNR threshold 가 active set 을 줄임 | 맞음 | "유저를 거른다"보다 "reported AP-beam candidates 를 줄인다"가 정확 |
+| UE-side Top-N AP 가 serving/conflict graph 를 줄임 | 맞음 | Top-N은 channel 자체가 아니라 algorithm이 보는 strong AP feature를 줄이는 것 |
+| graph 가 sparse 해지면 coloring 에 필요한 pilot 수가 줄어듦 | 맞음 | 단, graph construction 방식에 따라 chromatic number 가 달라짐 |
+| pilot 수가 줄면 data region 이 늘어남 | 맞음 | simulator가 `tau_p_actual`로 prelog를 계산한다는 전제가 필요 |
+| 그래서 성능이 좋아짐 | 조건부로 맞음 | SINR 손실이 prelog gain보다 작을 때만 |
+
+발표용으로는 이렇게 말해야 합니다:
+
+> AP-side beam filtering and UE-side Top-N selection are two ways of reducing the effective conflict graph. When this pruning keeps the dominant channels but removes weak links, the graph needs fewer pilots, so the saved pilot overhead becomes data transmission time.
+
+---
+
+## 5. Claim 의 공격 지점과 방어 문장
+
+| 위험 | 왜 위험한가 | 발표에서 쓸 방어 문장 |
+|---|---|---|
+| "그럼 `tau_p=1` 이 최고냐?" | fewer-is-always-better 로 들리면 바로 나오는 질문 | "No. We need a reduced-but-sufficient active set. Too small a pilot set increases contamination and estimation loss." |
+| "pilot count 말고 algorithm 차이 아닌가?" | active set, RF chain, graph, SE evaluator 가 섞여 있음 | "We do not claim pilot count is the only factor. But the measured SE gain closely matches the prelog gain, so pilot overhead is the dominant observed lever." |
+| "MatchingBeamFixed 는 왜 Random보다 낮나?" | matching 자체가 우수하다는 claim 의 반례 | "That is exactly why our claim is about adaptive pilot overhead, not matching alone." |
+| "TopAP 은 K=40 이후 지는데?" | 우리 아이디어의 한계 | "TopAP is less robust under heavier load. Beam-domain matching keeps tau lower in that regime." |
+| "`tau_p_actual` 이 실제 시스템에서 바로 줄어드나?" | 프로토콜이 design budget 전체를 reserve 하면 prelog gain 이 사라짐 | "Our result assumes the scheduler pays the actual number of used orthogonal pilots. If the frame reserves the full design budget regardless, this gain becomes a scheduling-design question." |
+| "NMSE 직접 봤나?" | channel estimation 손실을 직접 측정하지 않음 | "Not yet. We use SE/P5 as end-to-end evidence; NMSE is a backup/future diagnostic." |
+
+---
+
+## 6. 발표 Slide 에 넣을 구조
+
+### Slide A — Two paths to the same mechanism
+
+| Path | Selection rule | What becomes sparse | Pilot effect |
 |---|---|---|---|
-| R1 | **Confounding**: Mussbah 가 τ_p ↑ 인데도 결과 좋지 않은 게 *"pilot 수 때문"* 인지 *"Mussbah algorithm 이 이 K/L 에서 sub-optimal"* 때문인지 분리 불가 | 중간 | "Mussbah algorithm 자체 수치는 paper 환경에서 작동, 우리 환경에서는 conflict 너무 많아 τ_p ↑" 로 *환경 dependency* 강조 |
-| R2 | **단조성 과장**: "더 적을수록 더 좋다" 로 해석되면 τ_p=1 까지 줄여야 한다는 *오해* | 높음 | "single MC 곡선이 *unimodal* 임" 을 sensitivity sweep 으로 보여주거나, 발표문에서 *"a smaller τ_p, when feasible without SINR collapse"* 처럼 조건부 표현 |
-| R3 | **General claim vs scenario-specific**: 단일 환경 (K=50, L=200, N=8, τ_c=150) 결과를 *general claim* 으로 oversell | 높음 | 환경 명시 + "we observe within this regime" 로 한정 |
-| R4 | **EE 모델의 proxy 성격**: 우리 EE 는 *ref12-rf simplified* 로 활성 RF chain × p_rf + p_fix 만 고려. Backhaul, processing power 누락 | 낮음 | EE plot 의 axis label 에 "(proxy, ref12-rf simplified)" 명시 (이미 plot 에 적용) |
-| R5 | **τ_p_actual vs τ_p_design 혼동**: τ_p=15 로 reserve 했지만 실제 사용은 적은 것 — coherence-block 의 *물리적* gain 인지 *reservation* 만 줄인 것인지 | 중간 | "all schemes share τ_p_design=15 budget; only beam/AP-aware ones actually pay τ_p_actual < 15" 로 *budget allocation* 관점 명시 |
-| R6 | **Estimation MSE 측정 부재**: 우리 metric 은 SE/EE 뿐, NMSE 직접 보고 안 함 → "SINR 안 떨어진다" 는 결과로 *간접* 추정 | 낮음 | Q&A 대비로 NMSE 그래프 backup slide 준비 권장 |
+| AP/beam-side | beam-detect SNR, active/moderate beam threshold | AP-beam conflict graph | fewer colors |
+| UE-side | Top-N strongest APs | AP-overlap conflict graph | fewer colors |
 
-### 4.2 R1 (Confounding) 더 깊은 분석
+Caption:
 
-Mussbah 가 우리 환경에서 *τ_p_actual ~26* 인 이유: K=50 UEs, beam_detect=0 dB (default) 에서 reported beam 이 매우 많아 → adjacency 매우 dense → DSATUR 가 26 colors 사용. 이건 **algorithm 의 한계** + **environment 의 conflict density** 의 *합작*.
+> Different pruning rules, same mechanism: fewer effective conflicts reduce the number of orthogonal pilots needed.
 
-`beam_detect=20 dB` 로 olive 하면 Mussbah 도 τ_p_actual ~7 까지 떨어지고 SE +6.5% → "Mussbah 도 환경 tuning 하면 잘 작동한다" 가 결론.
+### Slide B — Evidence table
 
-⇒ **R1 대응**: 발표에서 "beam-detect SNR threshold tuning 으로 Mussbah 자체도 SE 개선" 을 *first finding* 로 제시하면 우리 contribution 의 *시점* 이 명확해짐. 즉:
+우리 환경에서 4개만 넣는 것을 추천:
 
-1. 기존 Mussbah default (β-detect=0) → too many reported beams → τ_p ↑ → SE ↓
-2. β-detect 를 늘리거나 weighted threshold 추가 → reported set sparser → τ_p ↓ → SE ↑
-3. 같은 방향성을 *UE-side AP selection (TopAP)* 로도 달성 가능 — independent 검증
+| Scheme | Mean SE | Mean `tau_p_actual` | Prelog gain |
+|---|---:|---:|---:|
+| Random | 5.375 | 14.94 | baseline |
+| MJH weighted-count strict | 5.833 | 3.23 | +8.67% |
+| MJH beam-resource matching | 5.794 | 4.46 | +7.76% |
+| Hybrid#3 | 5.659 | 7.90 | +5.21% |
 
----
+Caption:
 
-## 5. 권장 main clause 재서술 안
+> The SE gain tracks the prelog gain almost one-to-one in the main environment.
 
-**원안**: *"pilot 수가 적을수록 성능이 좋다"*
+### Slide C — Caveat
 
-**개선안 1 (Conservative)**: *"본 K=50, L=200, N=8, τ_c=150 환경에서, beam-domain 혹은 AP-domain conflict graph 의 sparsification 으로 τ_p_actual 을 줄인 schemes 가 prelog gain 을 통해 mean SE 와 EE 를 동시에 개선함."*
+한 문장만 넣기:
 
-**개선안 2 (Direct, recommended)**: *"Coherence block 내 pilot overhead 를 능동적으로 줄이는 것이 cell-free massive MIMO 에서 핵심 lever 다. AP/UE 어느 한 쪽에서 active set 을 줄이든 효과는 동일 — sparser conflict graph → fewer pilots → larger data prelog."*
-
-**개선안 3 (Critical, defensive)**: *"τ_p adaptive 화는 SE 와 EE 양쪽에서 의미 있는 개선을 제공한다. 단 이 효과는 (i) channel estimation 이 충분한 SINR 을 유지하는 'reduced but sufficient' active set 에서만 성립하며, (ii) load regime (K vs L·N) 이 conflict 를 inherent 하게 만들지 않을 때 한정된다."*
-
-미팅 결정 narrative 와 가장 맞는 안: **개선안 2** (direct + memorable) + **개선안 3 의 caveats** 을 backup slide 로.
+> Pilot reduction helps only while the retained AP/beam set is strong enough; after that point, SINR loss dominates.
 
 ---
 
-## 6. 발표 슬라이드 구성 권장 (10-20 분 안에서 안전)
+## 7. 최종 발표 문장
 
-1. **Setup slide**: K=50, L=200, N=8, τ_c=150, β-detect=20 dB, weighted-thr=10 의 *환경 한정* 명시
-2. **Headline slide**: 12-scheme eCDF + mean SE bar (현재 작업 결과)
-3. **The "fewer pilots" finding**: pilot box plot + τ_p_actual vs mean SE scatter (*correlation visualisation*)
-4. **Mechanism slide**: SE = (τ_c-τ_p)/τ_c × log₂(1+SINR) 분해, prelog gain 수치화
-5. **Two paths same destination**: AP-side (Mussbah/MJH) vs UE-side (TopAP) 비교 — independent 검증으로 framing
-6. **EE slide**: EE proxy bar + caveat (ref12-rf simplified)
-7. **Caveat slide** (Q&A 방어용): R2, R3, R5 의 *한계 조건* 명시 ★
-8. **Conclusion slide**: 개선안 2 의 main clause + 향후 연구 (heavy-load regime, NMSE 측정 추가)
+### 가장 좋은 버전
 
----
+> **The dominant gain comes from right-sizing the active AP/beam set: it sparsifies the conflict graph, reduces the actual pilot count, and converts pilot overhead into data transmission time, as long as the retained channels are strong enough.**
 
-## 7. 검토 결론
+### 한국어 발표 버전
 
-미팅 main clause **"파일럿 수가 적을수록 성능이 좋다"** 는 **방향성으로는 적절** 하지만, 다음 조건을 *명시적으로* 짚어야 안전합니다:
+> **핵심 이득은 pilot contamination 을 무조건 더 잘 피한 것이라기보다, 약한 AP/beam link 를 제거해 conflict graph 를 sparse 하게 만들고 실제 pilot 수를 줄여 coherence block 안의 data 전송 비율을 키운 데서 나온다. 단, dominant channel 을 잃을 정도로 줄이면 SINR 손실이 커져 이득이 사라진다.**
 
-- ✅ **본 환경 (K=50, L=200, N=8, τ_c=150, moderate load)** 에서 일관되게 관측됨
-- ⚠️ **단조성 표현 주의** — "적을수록"이 "0 까지" 로 해석되지 않게
-- ⚠️ **Channel estimation quality 보장** 이 prerequisite — "active set 줄이되 dominant beam 은 살린다"
-- ⚠️ **Heavy-load regime** 에서는 claim 반전 가능 — 본 작업의 미해결 boundary
-- ✅ **두 경로 (AP-side, UE-side)** 가 같은 결론 — independent corroboration ⇒ claim robustness ↑
+### 더 짧은 conclusion
 
-➡️ **권장**: 개선안 2 의 main clause + 개선안 3 의 caveat slide. 이로써 reviewer/audience 가 R2, R3 으로 공격할 여지를 사전에 차단.
+> **Fewer pilots help only when they come from a reduced-but-sufficient active set.**
 
 ---
 
-## Appendix A: 본 검토를 강화하는 추가 실험 (시간 여유 시)
+## 8. τ_p sweep 결과 (2026-06-07, sweep 완료)
 
-1. **τ_p sweep on Hybrid#3** (τ_p ∈ {3, 5, 7, 9, 11, 13, 15}) → "fewer pilots better" 가 *unimodal* 임을 직접 보여주는 곡선. 단조성 R2 risk 완전 해소.
-2. **NMSE measurement** (`mussbah_se` 에 NMSE 출력 추가) → SINR 손실 없음을 *직접* 입증, R6 risk 해소.
-3. **K sweep** (K ∈ {20, 50, 100, 150, 200}) → heavy-load regime 에서 claim 반전 boundary 측정, R3 risk 해소.
+`experiments/presentation_taup_sweep.py` 가 `tau_p_design ∈ {1,2,3,5,7,9,11,13,15,18,22}` × 100 setups × 10 channel samples 로 종료. Figures: [`figures/sweep_taup_*_final.png`](figures/).
 
-위 3개 중 시간 여유 보고 1개 (τ_p sweep) 만이라도 추가하면 발표 robustness 큰 향상.
+### 8.1 Adaptive 계열의 robustness (★ 발표 핵심)
+
+| Scheme | τ_p_actual 범위 (τ_p_design 1→22) | mean SE 범위 |
+|---|---|---|
+| Mussbah / MJH weighted-default / weighted-power | 6.84 - 7.06 | 5.61 - 5.76 |
+| MJH weighted-count strict | 3.11 - 3.24 | 5.75 - 5.90 |
+| MJH beam-resource matching | 4.34 - 4.48 | 5.70 - 5.86 |
+| Hybrid#3 (TopAP N=8 adaptive) | 7.75 - 7.98 | 5.58 - 5.73 |
+
+→ **adaptive 계열은 design budget 변화에 거의 영향 받지 않음**. τ_p_actual 이 자동으로 chromatic number 에 수렴.
+
+### 8.2 Fixed 계열에 대한 우리 환경 특이사항
+
+| τ_p_design | Random mean SE | Random P5 SE |
+|---:|---:|---:|
+| 1 | 5.92 | 1.22 |
+| 3 | 5.78 | 1.30 |
+| 7 | 5.76 | 1.24 |
+| 11 | 5.54 | 1.22 |
+| 15 | 5.32 | 1.17 |
+| 22 | 5.07 | 1.07 |
+
+→ **fixed 계열도 τ_p_design ↓ 에서 SE ↑**. P5 도 안 무너짐. 즉 우리 환경에서는 **sharp SINR cliff 가 관측되지 않음**.
+
+이유 (해석):
+
+- 우리 setting 의 *antenna richness*: L · N = 200 × 8 = **1600 antennas / 50 UEs = 32×**. spatial multi-user separation 이 contamination 손실을 흡수.
+- MJH 의 closed-form SINR (K=30, L=100 → 800/30 = 27×) 환경에서는 cliff 가 보일 가능성 (현재 검증 안 됨).
+
+### 8.3 발표에서의 방어 문장 (sweep 결과 반영)
+
+| 위험 | 방어 문장 |
+|---|---|
+| "그럼 τ_p=1 이 최고냐?" | "In our antenna-rich environment we do not observe a SINR cliff down to τ_p=1, but this is a property of the L·N >> K regime. In smaller systems (e.g., MJH K=30, L=100 closed-form, classical Mussbah K=10, L=100) the cliff exists; our adaptive schemes auto-land in the safe zone in both regimes." |
+| "adaptive 의 의의가 줄지 않나?" | "Adaptive schemes still win on two axes: (i) zero parameter tuning — auto-pick the right τ_p_actual regardless of design budget (Section 8.1 above); (ii) EE — they also reduce active RF chains, where Random/GC do not." |
+
+### 8.4 권장 발표 figure
+
+발표용 추가 figure (`figures/sweep_taup_*_final.png` 중 picking 1-2):
+
+1. **`sweep_taup_avg_se_vs_taup_final.png`**: adaptive 계열 평행선 vs fixed 계열 sloping line — *robustness story*. ★ 발표 핵심 추가 슬라이드.
+2. **`sweep_taup_tau_actual_vs_taup_final.png`**: τ_p_actual vs τ_p_design — adaptive 의 *auto-tuning* 직접 보여줌.
+
+---
+
+## 9. 최종 판정
+
+발표 conclusion 으로 사용 가능. 단, 다음 세 가지를 반드시 같이 말해야 합니다.
+
+1. **우리는 "파일럿 수가 작을수록 항상 좋다"고 주장하지 않는다.**
+2. **우리는 "dominant AP/beam 은 유지하면서 약한 link 를 제거해 actual pilot overhead 를 줄이는 것이 중요하다"고 주장한다.**
+3. **현재 결과에서는 SE gain 이 prelog gain 과 거의 일치하므로, pilot overhead reduction 이 가장 강한 설명이다.**
+
+이렇게 말하면 네 Top-N 아이디어와 동료 weighted-threshold / beam-resource matching 아이디어가 하나의 thesis 아래 자연스럽게 묶입니다.

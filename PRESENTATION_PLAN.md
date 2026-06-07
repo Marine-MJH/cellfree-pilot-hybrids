@@ -1,6 +1,8 @@
 # Presentation Plan — 발표/실험 계획
 
-작성일: 2026-06-05. 발표시간: **20분 (Q&A 별도)**.
+작성일: 2026-06-05. 최종 갱신: 2026-06-07. 발표시간: **20분 (Q&A 별도)**.
+
+> **🆕 2026-06-07 update**: PR #1 (MJH 통합본) merge 이후 final 실험 + cross-environment 비교 완료. **§5.0 최종 결과** 가 발표 headline numbers — 그 아래 §5.1-§5.6 은 단계별 milestone 보존 (참고용). 종합 정리는 [`FINAL_REPORT_PILOT_COMPARISON.md`](FINAL_REPORT_PILOT_COMPARISON.md), main claim 의 risk 분석은 [`PRESENTATION_CLAIM_REVIEW.md`](PRESENTATION_CLAIM_REVIEW.md).
 
 ## 0. 미팅 agenda (먼저 합의할 의사결정 항목)
 
@@ -154,7 +156,48 @@
 
 ## 5. Headline numbers — 외울 정확한 숫자들
 
-발표 중 *정확히 인용* 할 수치. 미팅 시 *함께 확인*.
+발표 중 *정확히 인용* 할 수치. **§5.0 이 final, §5.1-§5.6 은 historical milestone**.
+
+### 5.0 ★ 최종 결과 (2026-06-07, 12 schemes, beam-detect=20 dB, weight-thr=10)
+
+#### 5.0.A 우리 환경 — K=50, L=200, N=8, fc=3 GHz, τ_c=150, 200 setups × 20 ch
+
+[`experiments/presentation_main_compare.py`](experiments/presentation_main_compare.py) — Mussbah-style MC SE.
+
+| Scheme | Mean SE | vs Random | P5 SE | Mean τ_p | EE proxy | EE vs Random |
+|---|---:|---:|---:|---:|---:|---:|
+| Random / GC / Structured / Gao matching | ≈ 5.374 | 0% | 1.14 | 15.0 | 1.44 | 0% |
+| Mussbah / MJH weighted-count default / MJH weighted-power | 5.697 | **+5.99%** | 1.238 | 6.93 | 2.199 | **+52.75%** |
+| **MJH weighted-count strict (thr=10)** ★ | **5.833** | **+8.53%** | 1.220 | **3.23** | **2.252** | **+56.42%** |
+| **MJH beam-resource matching** ★ | **5.794** | **+7.80%** | **1.240** | **4.46** | 2.237 | **+55.35%** |
+| **Hybrid#3 (우리)** ★ | **5.659** | **+5.28%** | **1.236** | **7.90** | 1.718 | +19.33% |
+
+#### 5.0.B MJH 환경 — K=30, L=100, N=8, fc=5 GHz, τ_c=100, 200 setups, full power, closed-form SINR
+
+[`MJH/all_schemes_ap_domain_hybrids_pilot_boxplot.py`](MJH/all_schemes_ap_domain_hybrids_pilot_boxplot.py) — w_aa=2, w_ai=w_ia=1, edge_thr=10.
+
+| Scheme | Mean SE | vs Random | Mean τ_p | EE | EE vs Random |
+|---|---:|---:|---:|---:|---:|
+| Random / baselines | ≈ 2.937 | 0% | 10.0 | 1.115 | 0% |
+| **MatchingBeamAdaptive** ★ | **3.059** | **+4.16%** | **5.45** | **1.231** | **+10.39%** |
+| Proposed (weighted-thr=10) | 2.942 | +0.15% | 9.03 | 1.184 | +6.18% |
+| Hybrid#3 (우리, K=30) | 2.925 | -0.42% | 10.24 | 1.111 | -0.42% |
+
+#### 5.0.C K-sweep load-regime boundary (MJH env, K=25..45)
+
+| K | Hybrid#3 vs Random | Proposed vs Random | MatchingBeamAdaptive vs Random |
+|---:|---:|---:|---:|
+| 25 | +2.77% | +2.99% | **+5.66%** |
+| 30 | +1.68% | +1.96% | **+5.18%** |
+| 35 | +0.57% | +1.19% | **+4.76%** |
+| 40 | **-0.42%** ★ | +0.15% | **+4.16%** |
+| 45 | **-1.42%** ★ | -0.51% | **+3.81%** |
+
+★ = **Heavy-load (K ≥ 40) 에서 Hybrid#3 (element-domain) advantage 반전**. Beam-domain matching adaptive 만 robust → 발표 caveat 슬라이드 핵심 증거.
+
+#### 5.0.D 메인 message (final)
+
+> **"두 독립 환경 + 두 독립 SE evaluator (MC vs closed-form) 에서 일관되게: adaptive τ_p reduction 이 SE 와 EE 양쪽의 dominant lever. AP-domain (Mussbah / MJH weighted-threshold / beam-resource matching) 과 element-domain (우리 TopAP / Hybrid#3) 모두 같은 방향. 가장 robust 한 single scheme 은 *MJH beam-resource matching (adaptive)* — K=25~45 전체에서 +3.8~7.8% SE 일관."**
 
 ### 5.1 Gao reproduce
 
