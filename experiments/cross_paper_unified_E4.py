@@ -43,6 +43,7 @@ from src.pilot_schemes import (
     RandomPilotAssignment,
     StructuredPilotAccessAssignment,
     TopAPGraphColoringPilotAssignment,
+    WeightedBeamThresholdPilotAssignment,
 )
 
 
@@ -56,6 +57,9 @@ SCHEME_ORDER = [
     "H2 Gao+greedy",
     "Hybrid#3 (TopAP N=8 adaptive)",
     "Hybrid#4 (TopAP+greedy)",
+    "MJH weighted-count default",
+    "MJH weighted-count strict",
+    "MJH weighted-power",
 ]
 
 SCHEME_COLORS = {
@@ -68,6 +72,9 @@ SCHEME_COLORS = {
     "H2 Gao+greedy": "#17becf",
     "Hybrid#3 (TopAP N=8 adaptive)": "#e377c2",
     "Hybrid#4 (TopAP+greedy)": "#8c564b",
+    "MJH weighted-count default": "#fdae61",
+    "MJH weighted-count strict": "#d73027",
+    "MJH weighted-power": "#b15928",
 }
 
 
@@ -89,6 +96,22 @@ def build_schemes(seed_base: int, delta: float) -> dict:
         ),
         "Hybrid#4 (TopAP+greedy)": Hybrid4TopAPGreedyPilotAssignment(
             seed=seed_base + 9, top_n=10
+        ),
+        # MJH teammate's weighted-threshold variants (PRESENTATION_PLAN.md §7)
+        "MJH weighted-count default": WeightedBeamThresholdPilotAssignment(
+            seed=seed_base + 10, delta=delta,
+            variant="weighted-count", w_aa=2.0, w_am=1.0, threshold=0.0,
+            adaptive_tau_p=True,
+        ),
+        "MJH weighted-count strict": WeightedBeamThresholdPilotAssignment(
+            seed=seed_base + 11, delta=delta,
+            variant="weighted-count", w_aa=2.0, w_am=1.0, threshold=3.0,
+            adaptive_tau_p=True,
+        ),
+        "MJH weighted-power": WeightedBeamThresholdPilotAssignment(
+            seed=seed_base + 12, delta=delta,
+            variant="weighted-power", w_aa=2.0, w_am=1.0, threshold=0.0,
+            adaptive_tau_p=True,
         ),
     }
 
