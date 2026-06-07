@@ -281,6 +281,47 @@ def build_presentation_six_method_sweep() -> pd.DataFrame:
     return combined
 
 
+def write_environment_note() -> None:
+    text = "\n".join(
+        [
+            "# Presentation 6-Method Figures",
+            "",
+            "Purpose: final six-method comparison used by the presentation deck.",
+            "",
+            "Simulation setting:",
+            "",
+            "- L = 200 APs",
+            "- N = 8 antennas per AP",
+            "- K-list = 25 30 35 40 45 50",
+            "- tau_c = 150",
+            "- baseline/design tau_p = 15",
+            "- setups = 200",
+            "- carrier = 3 GHz",
+            "- power control = full",
+            "- weighted beam graph: w_aa = 2, w_ai = 1, w_ia = 1",
+            "- Beam-Weighted Threshold uses edge_threshold = 10",
+            "- Mussbah Beam Graph uses edge_threshold = 0",
+            "- AP-Top-N uses N = 8",
+            "",
+            "Sources:",
+            "",
+            f"- base five-method CSV: {MJH_WITH_GAO.relative_to(PROJECT_ROOT)}",
+            f"- Mussbah edge-0 CSV: {MJH_MUSSBAH_EDGE0.relative_to(PROJECT_ROOT)}",
+            f"- six-method output CSV: {PRESENTATION_SIX_CSV.relative_to(PROJECT_ROOT)}",
+            "",
+            "Generated figures:",
+            "",
+            "- presentation_clean_load_crossover_se.png",
+            "- presentation_clean_load_crossover_ee.png",
+            "- presentation_clean_pilot_count_vs_k.png",
+            "- presentation_latest_6method_p5_throughput_vs_k.png",
+            "- presentation_latest_6method_ecdf_throughput_k50.png",
+            "",
+        ]
+    )
+    (OUT_DIR / "README.md").write_text(text)
+
+
 def plot_presentation_six_sweep(
     sweep: pd.DataFrame,
     metric: str,
@@ -371,8 +412,10 @@ def main() -> None:
         title="Average pilot count under increasing user load",
         out_name="presentation_clean_pilot_count_vs_k.png",
     )
+    write_environment_note()
 
     for name in [
+        "README.md",
         "presentation_clean_pilot_count_vs_k.png",
         "presentation_clean_k_sweep_se.png",
         "presentation_clean_k_sweep_ee.png",

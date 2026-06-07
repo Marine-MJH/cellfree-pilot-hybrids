@@ -146,6 +146,6 @@ Good UE clustering and AP/beam pruning should balance SINR preservation against 
 ## 10. Remaining Caveats
 
 - Final six-method plots do not include bootstrap confidence intervals. Significance wording은 피한다.
-- Gao high-load realistic sweep (`tau_p=15`, larger K) has not been run.
+- Gao high-load realistic sweep (`tau_p=15`, larger K) has now been run. It did not produce a large mean-SE Gao/Random separation; at `K=300`, Gao is `+0.07%` on mean SE and `+1.52%` on P5 throughput.
 - EE is a simplified proxy, not a fully coupled network energy model.
 - SINR/NMSE decomposition is not yet included. Therefore "SINR preserved"는 결과 해석으로만 말하고, direct measured SINR claim으로 말하지 않는다.

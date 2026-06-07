@@ -11,7 +11,7 @@
 \graphicspath{{../figures/}}
 
 \title{Pilot Assignment in Cell-Free Massive MIMO}
-\subtitle{System Model, Pilot Contamination, and Adaptive Assignment}
+\subtitle{Conflict-Graph Sparsification for Pilot-Overhead Control}
 \author{Myoungjin Oh \and Jeonghoo Maeng}
 \date{June 2026}
 
@@ -337,40 +337,7 @@
 \end{frame}
 
 % ----------------------------------------------------------------
-% 5. Reproduction anchor
-% ----------------------------------------------------------------
-\section{Reproduction}
-
-\begin{frame}{Reproduction Anchor: Gao Small-Pilot Regime}
-    \small
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.40\textwidth}
-            \textbf{What this slide supports}
-            \begin{tightitemize}
-                \item 200 Monte Carlo setups.
-                \item $\taup=10$, max-min power.
-                \item Gao vs Random: \textbf{+21.7\%}.
-                \item Paper claim: approximately +23\%.
-            \end{tightitemize}
-
-            \vspace{0.6em}
-            \textbf{How to use it}
-            \begin{tightitemize}
-                \item Use as a reproduction anchor.
-                \item Do not use it as the final multi-antenna benchmark.
-            \end{tightitemize}
-
-            \envnote{Environment: Gao reproduction setting; different from the same-environment multi-antenna results.}
-        \end{column}
-        \begin{column}{0.56\textwidth}
-            \centering
-            \includegraphics[width=\linewidth,height=0.63\textheight,keepaspectratio]{gao_fig3_vs_pilot_number_final200.png}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-% ----------------------------------------------------------------
-% 6. Proposed methods
+% 5. Proposed methods
 % ----------------------------------------------------------------
 \section{Method Family}
 
@@ -483,7 +450,52 @@
 % ----------------------------------------------------------------
 \section{Results}
 
-\begin{frame}{Main Result: User Load Sweep}
+\begin{frame}{Experimental Setup}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.49\textwidth}
+            \textbf{Common simulation setting}
+            \vspace{0.25em}
+            \centering
+            \resizebox{\linewidth}{!}{%
+                \begin{tabular}{lc}
+                    \toprule
+                    Parameter & Value \\
+                    \midrule
+                    APs & $L=200$ \\
+                    AP antennas & $N=8$ unless swept \\
+                    Coherence block & $\tauc=150$ \\
+                    Fixed pilot budget & $\taup^{design}=15$ \\
+                    Monte Carlo setups & 200 \\
+                    Power control & full \\
+                    Carrier frequency & 3 GHz \\
+                    \bottomrule
+                \end{tabular}
+            }
+
+            \vspace{0.5em}
+            \envnote{Adaptive methods use their actual graph-coloring pilot count in the SE prelog.}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \textbf{Methods compared}
+            \begin{tightitemize}
+                \item Random
+                \item Gao Matching
+                \item Mussbah Beam Graph
+                \item AP-Top-N Adaptive
+                \item Beam-Weighted Threshold
+                \item Beam-Resource Matching
+            \end{tightitemize}
+
+            \vspace{0.5em}
+            \begin{block}{Main evaluation question}
+                Does the conflict graph reduce pilot overhead while keeping enough useful channel structure?
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Main Result: Moderate User Load}
     \small
     \centering
     \includegraphics[width=0.90\linewidth,height=0.51\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_se.png}
@@ -496,12 +508,12 @@
         \end{column}
         \begin{column}{0.49\textwidth}
             \scriptsize
-            \textbf{Result}
+            \textbf{Result at $K=50$}
             \begin{tightitemize}
-                \item Gao stays near Random.
-                \item Top-N and Resource stay above Random through $K=50$.
-                \item Beam-Weighted crosses below Random from $K=40$.
-                \item At $K=50$: Resource $+6.66\%$, Top-N $+5.35\%$, Mussbah $-23.24\%$.
+                \item Beam-Resource: $+6.66\%$ mean SE, $+7.07\%$ 95\%-likely SE.
+                \item AP-Top-N: $+5.35\%$ mean SE, $+6.32\%$ 95\%-likely SE.
+                \item Gao stays near Random: $-0.02\%$ mean SE.
+                \item Mussbah loses $23.24\%$ mean SE as actual $\taup$ grows.
             \end{tightitemize}
         \end{column}
     \end{columns}
@@ -537,33 +549,93 @@
 \end{frame}
 
 % ----------------------------------------------------------------
-% 11. Energy efficiency
+% 11. Antenna-count robustness
 % ----------------------------------------------------------------
-\begin{frame}{Energy Efficiency Under User Load}
+\begin{frame}{Antenna Sweep: Robustness Across $N$}
     \small
-    \centering
-    \includegraphics[width=0.90\linewidth,height=0.56\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_ee.png}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.49\textwidth}
+            \centering
+            \includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png}
+        \end{column}
+        \begin{column}{0.49\textwidth}
+            \centering
+            \includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_ee_vs_n.png}
+        \end{column}
+    \end{columns}
 
     \vspace{0.15em}
     \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.47\textwidth}
+        \begin{column}{0.48\textwidth}
             \scriptsize
-            \textbf{Environment:} same K-sweep as the SE slide; EE is a proxy using the same selected method set.
+            \textbf{Environment:} $K=50$, $L=200$, $N=1,\ldots,8$, $\tauc=150$, $\taup^{design}=15$, 200 setups.
         \end{column}
         \begin{column}{0.49\textwidth}
             \scriptsize
-            \textbf{Result}
+            \textbf{Reading}
             \begin{tightitemize}
-                \item Beam-Resource Matching stays highest across the sweep.
-                \item At $K=50$: Resource $+12.35\%$, AP-Top-N $+5.29\%$.
-                \item Mussbah loses EE under load as its pilot count grows.
+                \item Beam-Resource is the best mean-SE method for every tested $N$.
+                \item At $N=8$: Beam-Resource gives $+6.57\%$ SE and $+12.01\%$ EE proxy.
+                \item AP-Top-N remains positive and simpler: $+5.25\%$ SE at $N=8$.
             \end{tightitemize}
         \end{column}
     \end{columns}
 \end{frame}
 
 % ----------------------------------------------------------------
-% 12. Conclusion
+% 12. High-load stress test
+% ----------------------------------------------------------------
+\begin{frame}{Stress Test: Very High User Load}
+    \footnotesize
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.57\textwidth}
+            \centering
+            \includegraphics[width=\linewidth,height=0.56\textheight,keepaspectratio]{presentation_high_k_6method_no_mussbah/high_k_5method_avg_se_vs_k.png}
+        \end{column}
+        \begin{column}{0.39\textwidth}
+            \textbf{Why this plot matters}
+            \begin{tightitemize}
+                \item Only $K$ is increased from the main setting.
+                \item Gao still stays close to Random: $+0.07\%$ mean SE at $K=300$.
+                \item Beam-Resource stays positive through $K=200$, then crosses below Random.
+                \item AP-Top-N crosses earlier, around $K=150$.
+            \end{tightitemize}
+
+            \vspace{0.25em}
+            \textbf{Plot choice}
+            \begin{tightitemize}
+                \item Mussbah is omitted because its actual $\taup$ exceeds $\tauc$ from $K=200$.
+            \end{tightitemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Result Synthesis}
+    \small
+    \centering
+    \resizebox{\linewidth}{!}{%
+        \begin{tabular}{lccc}
+            \toprule
+            Method & Main observation & Strength & Weakness \\
+            \midrule
+            Random & fixed-pilot reference & stable baseline & no conflict awareness \\
+            Gao Matching & near Random here & useful AP-domain reference & small effect in this evaluator \\
+            Mussbah Beam Graph & dense graph, many pilots & beam-domain reference & $\taup$ grows too fast \\
+            AP-Top-N Adaptive & positive moderate-load gain & simple large-scale rule & loses earlier at high $K$ \\
+            Beam-Weighted Threshold & exposes dense-graph failure & active-beam weighting idea & pilot count not controlled enough \\
+            Beam-Resource Matching & strongest current direction & low $\taup$ with channel structure & has an operating range \\
+            \bottomrule
+        \end{tabular}
+    }
+
+    \vspace{0.85em}
+    \begin{block}{Interpretation}
+        The useful design is not the one that minimizes pilot count alone; it is the one that removes weak conflicts while preserving enough dominant AP/beam structure.
+    \end{block}
+\end{frame}
+
+% ----------------------------------------------------------------
+% 13. Conclusion
 % ----------------------------------------------------------------
 \section{Conclusion}
 
@@ -582,9 +654,9 @@
             \scriptsize
             \textbf{What we can defend}
             \begin{tightitemize}
-                \item Beam-Resource and AP-Top-N keep positive SE and EE margins.
-                \item Beam-Weighted crossover shows pilot-budget control matters.
-                \item Gao is a reproduction anchor, not the main winner here.
+                \item Beam-Resource is the strongest current rule in this evaluator.
+                \item AP-Top-N is a simple AP-domain rule with positive moderate-load gain.
+                \item Beam-Weighted and Mussbah show why pilot-count control matters.
             \end{tightitemize}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -592,8 +664,8 @@
             \textbf{What we should not oversell}
             \begin{tightitemize}
                 \item Fewer pilots are not always better.
-                \item $\taup=3$ stress is diagnostic.
-                \item SE gain is not direct evidence of higher SINR.
+                \item Beam-domain information is useful only if the graph is not too dense.
+                \item Gao remains close to Random in the same-environment comparison.
                 \item EE is a simplified proxy.
             \end{tightitemize}
         \end{column}
@@ -602,7 +674,7 @@
     \vspace{0.35em}
     \begin{center}
         \footnotesize
-        \textbf{Final claim:} adaptive pilot assignment is useful when it cuts pilot overhead without visibly sacrificing SINR.
+        \textbf{Final claim:} adaptive pilot assignment is useful when it cuts pilot overhead without sacrificing too much useful channel structure.
     \end{center}
 \end{frame}
 
@@ -611,6 +683,68 @@
 % ----------------------------------------------------------------
 \appendix
 \section{Backup}
+
+\begin{frame}{Backup: Gao Small-Pilot Reproduction Anchor}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.40\textwidth}
+            \textbf{What this supports}
+            \begin{tightitemize}
+                \item 200 Monte Carlo setups.
+                \item $\taup=10$, max-min power.
+                \item Gao vs Random: $+21.7\%$ in this reproduction run.
+                \item Paper claim: approximately $+23\%$.
+            \end{tightitemize}
+
+            \vspace{0.55em}
+            \textbf{How it is used}
+            \begin{tightitemize}
+                \item Reproduction anchor for Gao-style behavior.
+                \item Not the final same-environment ranking.
+            \end{tightitemize}
+        \end{column}
+        \begin{column}{0.56\textwidth}
+            \centering
+            \includegraphics[width=\linewidth,height=0.63\textheight,keepaspectratio]{gao_fig3_vs_pilot_number_final200.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Backup: Gao Small-Pilot Diagnostic}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.55\textwidth}
+            \centering
+            \includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{presentation_gao_stress_L100_tau3/gao_stress_p5_throughput_vs_k.png}
+        \end{column}
+        \begin{column}{0.41\textwidth}
+            \textbf{Why this is backup}
+            \begin{tightitemize}
+                \item $\taup=3$ intentionally makes the pilot budget very tight.
+                \item This helps diagnose when Gao-style matching becomes visible.
+                \item It is not the practical main setting of the final comparison.
+            \end{tightitemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Backup: Full High-$K$ Plot with Mussbah}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.57\textwidth}
+            \centering
+            \includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{presentation_high_k_6method/high_k_avg_se_vs_k.png}
+        \end{column}
+        \begin{column}{0.39\textwidth}
+            \textbf{Why the main slide omits Mussbah}
+            \begin{tightitemize}
+                \item Mussbah actual $\taup$: $160.7$ at $K=200$.
+                \item Since $\tauc=150$, the SE prelog collapses.
+                \item The resulting zero-SE curve hides differences among the other methods.
+            \end{tightitemize}
+        \end{column}
+    \end{columns}
+\end{frame}
 
 \begin{frame}{Backup: Graph Consistency Rules}
     \small

@@ -1,143 +1,156 @@
 # Presentation Plan
 
-최종 갱신: 2026-06-07. 목표 발표 시간: 본문 18-20분, Q&A 별도.
+최종 갱신: 2026-06-08. 목표 발표 시간: 본문 18-20분, Q&A 별도.
 
-## 1. One-Sentence Narrative
+## 1. Final Narrative
 
-> **Pilot assignment is a balance between SINR preservation and pilot-overhead reduction.**
+> **Pilot assignment in cell-free massive MIMO is not a problem of simply using fewer pilots; it is a balance between pilot-overhead reduction and preserving the channel structure needed for SINR.**
 
-발표는 개인별 작업 분담이 아니라 **공동 제안한 method family**로 설명한다.
+교수님이 cell-free massive MIMO를 모른다는 전제로 시작한다. 발표는 "기존 논문 재현"이 아니라, 다음 연구 질문을 따라가야 한다.
 
-20분 자유주제 연구발표이므로, 이미 cell-free massive MIMO를 아는 사람을 가정하면 안 된다. 앞부분은 논문 발표처럼 system model부터 쌓는다.
+1. Cell-free massive MIMO에서는 많은 AP가 많은 UE를 cell boundary 없이 공동 serving한다.
+2. 이 구조는 coverage와 macro-diversity를 주지만, AP-UE channel estimation 수가 커진다.
+3. Coherence block 안에서 pilot 길이 `tau_p`가 커지면 데이터 전송 시간이 줄고, 너무 작으면 pilot contamination이 커진다.
+4. 따라서 pilot assignment는 "누가 같은 pilot을 써도 되는가"를 정하는 conflict graph 문제로 볼 수 있다.
+5. Gao는 AP-domain matching, Mussbah는 beam-domain graph coloring이라는 출발점을 준다.
+6. 우리는 AP-Top-N, Beam-Weighted Threshold, Beam-Resource Matching으로 conflict graph를 sparsify하는 method family를 비교했다.
+7. 최종 결과는 Beam-Resource Matching과 AP-Top-N이 moderate load와 antenna sweep에서 가장 방어 가능하다는 것이다.
+8. High-K stress test는 모든 adaptive method가 무조건 좋은 것이 아니며, pilot-count control이 없으면 무너질 수 있음을 보여준다.
 
-1. Cell-free massive MIMO는 여러 distributed AP가 cell boundary 없이 여러 UE를 공동으로 serving하는 구조다.
-2. AP는 uplink pilot을 통해 UE-AP channel을 추정하고, 이 추정값으로 beamforming/combining과 SE 계산을 한다.
-3. UE 수가 orthogonal pilot 수보다 많으면 pilot reuse가 필요하고, 같은 pilot을 쓰는 UE들의 channel estimate가 섞인다.
-4. 다대다 AP-UE 연결 때문에 "누가 누구와 pilot을 공유해도 되는가"가 dense conflict graph 문제가 된다.
-5. 좋은 pilot assignment는 UE clustering / AP-beam pruning으로 실제 pilot 수를 낮추되, 강한 채널 구조는 유지해야 한다.
-6. 이번 프로젝트는 AP-domain과 beam-domain에서 conflict graph를 줄이는 여러 방법을 비교했다.
-7. Current evidence points to adaptive pilot-count reduction as the right direction; under increasing load, a method can lose to Random if its conflict graph becomes too dense or its adaptive pilot count grows too much.
+## 2. What To Strengthen
 
-## 2. Method Names For Slides And Legends
+발표에서 강화할 부분:
 
-메인 발표와 그래프 범례에서는 아래 6개만 사용한다. 나머지 GC/Structured/TopAP-bisect/Hybrid#4/weighted-default/weighted-power는 CSV와 backup material에는 남기되 본문 그래프에서 제외한다.
+- System model: cell-free 구조, pilot channel estimation, coherence block prelog.
+- Problem framing: pilot contamination과 pilot overhead가 동시에 존재한다는 tradeoff.
+- Method family: 개인 작업 분담이 아니라 AP-domain/beam-domain conflict signal을 바꿔보는 공동 방법군.
+- Main result: `Beam-Resource Matching`은 K=50에서 SE `+6.66%`, EE proxy `+12.35%`, P5 throughput `+7.07%`.
+- Robustness: N=1..8 antenna sweep에서 Beam-Resource는 모든 N에서 평균 SE 1위이고, N=8에서 SE `+6.57%`, EE proxy `+12.01%`.
+- Limitation: high-K에서는 AP-Top-N과 Beam-Resource도 eventually Random 아래로 내려갈 수 있다. 이건 결론을 더 강하게 만든다: fewer pilots alone is not the answer.
 
-| Slide / legend name | Role | Short meaning |
-| --- | --- | --- |
-| **Random** | Reference | no structure-aware assignment |
-| **Gao Matching** | Reference | AP-domain many-to-many matching |
-| **Mussbah Beam Graph** | Reference | binary active/moderate beam graph |
-| **AP-Top-N Adaptive** | Proposed | Top-N AP overlap graph + adaptive coloring |
-| **Beam-Weighted Threshold** | Proposed | weighted active/moderate beam graph + threshold |
-| **Beam-Resource Matching** | Proposed | AP-beam resource matching + adaptive pilot count |
+줄일 부분:
 
-Regenerate clean figures after the same-environment K-sweep finishes:
+- Gao를 main winner처럼 설명하지 않는다. Same-environment에서는 Random과 거의 붙는다.
+- Mussbah를 main comparison plot에서 과하게 강조하지 않는다. 고부하에서는 `tau_p > tau_c`로 SE가 0에 가까워져 축을 망가뜨린다.
+- `tau_p=3` Gao-stress는 backup diagnostic으로만 둔다.
+- tau_p sweep은 본문에서 빼고, 질문이 오면 "diagnostic only"라고 답한다.
+- significance/CI 표현은 쓰지 않는다. 현재 본문 그래프는 200 setups 평균 비교다.
 
-```bash
-python experiments/presentation_make_clean_figures.py
-```
+## 3. Slide Structure
 
-## 3. Final Main Deck: 14 Slides, 20 Minutes
+| # | Title | Time | Figure / asset | Main point |
+| ---: | --- | ---: | --- | --- |
+| 1 | Title | 0.4 min | none | Topic and team |
+| 2 | Cell-Free Massive MIMO: Basic Picture | 1.2 min | TikZ AP/UE/CPU sketch | Distributed APs jointly serve UEs without fixed cell boundaries |
+| 3 | System Model: Channels and Coherence Block | 1.4 min | channel equation + coherence block | Pilot length directly reduces data symbols |
+| 4 | Uplink Pilots and Channel Estimation | 1.5 min | pilot observation equation | Same pilot reuse mixes channel estimates |
+| 5 | Pilot Contamination from Many-to-Many Serving | 1.5 min | conflict graph sketch | Many-to-many serving creates dense reuse conflicts |
+| 6 | Design Tradeoff: Contamination vs Overhead | 1.3 min | SE formula | The problem is a balance, not "minimize pilots" |
+| 7 | Starting Point: Gao and Mussbah | 1.2 min | comparison table | Existing AP-domain and beam-domain ideas motivate our method family |
+| 8 | Proposed Method Family | 1.5 min | method diagrams | AP-Top-N, Beam-Weighted, Beam-Resource are conflict-sparsification variants |
+| 9 | Method Map | 0.8 min | method table | Six methods, reduced reference set |
+| 10 | Experimental Setup | 0.7 min | setup table | Same-environment comparison, 200 setups |
+| 11 | Main Result: Moderate User Load | 1.7 min | `figures/presentation_6method/presentation_clean_load_crossover_se.png` | Beam-Resource and AP-Top-N stay above Random through K=50 |
+| 12 | Mechanism: Pilot Count vs Channel Structure | 1.4 min | `figures/presentation_6method/presentation_clean_pilot_count_vs_k.png` | Resource/Top-N reduce pilots; Mussbah and Beam-Weighted expose over-dense graph problems |
+| 13 | Antenna Sweep: Robustness Across N | 1.7 min | `figures/presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png`, `n_sweep_avg_ee_vs_n.png` | Beam-Resource remains strongest across N=1..8 |
+| 14 | Stress Test: Very High User Load | 1.4 min | `figures/presentation_high_k_6method_no_mussbah/high_k_5method_avg_se_vs_k.png` | High-K reveals the operating range and limitations |
+| 15 | Result Synthesis | 1.1 min | compact table | What each method teaches |
+| 16 | Conclusion | 0.8 min | none | Balance pilot overhead against channel-structure preservation |
 
-| # | Title | Time | Figure / asset | Main point | Do not say |
-| ---: | --- | ---: | --- | --- | --- |
-| 1 | Title | 0.5 min | none | Topic and team | Do not lead with every scheme name |
-| 2 | Cell-Free Massive MIMO: Basic Picture | 1.3 min | TikZ AP/UE/CPU sketch | Many distributed APs jointly serve many UEs | Do not assume "cell-free" is already clear |
-| 3 | System Model: Channels and Coherence Block | 1.4 min | channel + coherence-block equations | Channel estimation consumes part of each coherence block | Do not jump directly to algorithms |
-| 4 | Uplink Pilots and Channel Estimation | 1.7 min | pilot observation equation | Same pilot reuse mixes channel observations | Do not overderive MMSE details |
-| 5 | Pilot Contamination from Many-to-Many Serving | 1.8 min | conflict graph sketch | Dense AP/UE overlap makes reuse conflicts frequent | Do not frame contamination as only a cellular edge issue |
-| 6 | Design Tradeoff: Contamination vs Overhead | 1.3 min | SE formula | `SE = (1 - tau_p/tau_c) log2(1+SINR)` drives the whole story | Do not claim fewer pilots are always better |
-| 7 | Starting Point: Gao and Mussbah | 1.2 min | comparison table | Gao and Mussbah motivate AP-domain and beam-domain axes | Do not directly compare their absolute SE numbers |
-| 8 | Reproduction Anchor | 1.0 min | `figures/gao_fig3_vs_pilot_number_final200.png` | Gao small-pilot advantage is a useful anchor | Do not claim the whole paper ordering is perfectly recovered |
-| 9 | Proposed Method Family | 1.5 min | TikZ method-family diagram | There are multiple proposed methods, not one single hybrid | Do not split the slide into person-specific ownership |
-| 10 | Method Map | 0.8 min | method table | Methods differ by domain, conflict signal, and pilot-budget rule | Do not list every evaluated baseline |
-| 11 | Main Result: User Load Sweep | 1.8 min | `figures/presentation_6method/presentation_clean_load_crossover_se.png` | AP-Top-N and Beam-Resource remain above Random, while Beam-Weighted crosses below Random under load | Do not insert Gao-style hybrid as a substitute baseline |
-| 12 | Mechanism: Pilot Count vs SINR Balance | 1.4 min | `figures/presentation_6method/presentation_clean_pilot_count_vs_k.png` | Pilot-count reduction helps through prelog; Mussbah shows the cost of dense conflicts | Do not say the methods directly increase SINR |
-| 13 | Energy Efficiency Under User Load | 1.2 min | `figures/presentation_6method/presentation_clean_load_crossover_ee.png` | Beam-Resource and AP-Top-N keep positive EE gains because they use fewer pilots | Do not treat EE as a fully coupled power-control model |
-| 14 | Conclusion | 0.9 min | none | Good UE clustering and AP/beam pruning should balance SINR against pilot-count reduction | Do not oversell "fewer pilots are always better" |
+Backup slides:
 
-## 4. Headline Numbers To Use
+- Gao reproduction anchor: `figures/gao_fig3_vs_pilot_number_final200.png`
+- Gao-stress diagnostic: `figures/presentation_gao_stress_L100_tau3/gao_stress_p5_throughput_vs_k.png`
+- Full high-K plot with Mussbah if someone asks why it was omitted.
 
-### 4.1 Main Same-Environment Six-Method K-sweep
+## 4. Final Figure Set
+
+Main deck:
+
+- `figures/presentation_6method/presentation_clean_load_crossover_se.png`
+- `figures/presentation_6method/presentation_clean_pilot_count_vs_k.png`
+- `figures/presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png`
+- `figures/presentation_n_sweep_6method/n_sweep_avg_ee_vs_n.png`
+- `figures/presentation_high_k_6method_no_mussbah/high_k_5method_avg_se_vs_k.png`
+
+Backup / Q&A:
+
+- `figures/presentation_6method/presentation_clean_load_crossover_ee.png`
+- `figures/presentation_6method/presentation_latest_6method_p5_throughput_vs_k.png`
+- `figures/presentation_high_k_6method/high_k_avg_se_vs_k.png`
+- `figures/presentation_high_k_6method/high_k_pilot_count_vs_k.png`
+- `figures/presentation_gao_stress_L100_tau3/gao_stress_p5_throughput_vs_k.png`
+- `figures/gao_fig3_vs_pilot_number_final200.png`
+
+## 5. Headline Numbers
+
+### Moderate K Sweep
 
 Source: `figures/presentation_6method/presentation_mjh_6method_k_sweep.csv`.
 
-Environment:
+Environment: `L=200`, `N=8`, `K=25,30,35,40,45,50`, `tau_c=150`, `tau_p_design=15`, 200 setups.
 
-- `K=25,30,35,40,45,50`, `L=200`, `N=8`
-- `tau_c=150`, `tau_p_design=15`
-- 200 setups
-- Weighted threshold 10
-- Top-N graph uses `N=8` in the plotted AP-Top-N line
-- Evaluator: same six-method AP/beam-domain comparison / same EE proxy
+At `K=50`:
 
-Methods in the K-sweep:
+| Method | Mean SE vs Random | P5 throughput vs Random | EE proxy vs Random | Mean actual tau_p |
+| --- | ---: | ---: | ---: | ---: |
+| Gao Matching | `-0.02%` | `+0.43%` | `-0.02%` | `15.00` |
+| Mussbah Beam Graph | `-23.24%` | `-22.26%` | `-18.75%` | `45.76` |
+| AP-Top-N (N=8) | `+5.35%` | `+6.32%` | `+5.29%` | `7.79` |
+| Beam-Weighted Threshold | `-2.09%` | `-1.29%` | `+3.30%` | `17.06` |
+| Beam-Resource Matching | `+6.66%` | `+7.07%` | `+12.35%` | `5.29` |
 
-- Random
-- Gao Matching
-- Mussbah Beam Graph
-- AP-Top-N (N=8)
-- Beam-Weighted Threshold
-- Beam-Resource Matching
+### Antenna Sweep
 
-Reading:
+Source: `figures/presentation_n_sweep_6method/n_sweep_6method_summary.csv`.
 
-- Gao Matching stays near Random: at `K=50`, mean SE `-0.02%`, P5 throughput `+0.43%`, EE proxy `-0.02%`.
-- AP-Top-N stays positive: at `K=50`, mean SE `+5.35%`, P5 throughput `+6.32%`, EE proxy `+5.29%`, mean actual pilot count `7.79`.
-- Beam-Resource Matching stays positive and is the strongest final direction: at `K=50`, mean SE `+6.66%`, P5 throughput `+7.07%`, EE proxy `+12.35%`, mean actual pilot count `5.29`.
-- Beam-Weighted Threshold is a cautionary case: it is positive at low load, but crosses below Random from `K=40`; at `K=50`, mean SE `-2.09%` while EE proxy remains `+3.30%` because its selected resources are low.
-- Mussbah Beam Graph becomes too dense in this environment: at `K=50`, mean actual pilot count `45.76`, mean SE `-23.24%`, EE proxy `-18.75%`.
-- Do not reuse the old MJH `H2GaoGreedy` stress sweep as the main six-method comparison.
+Environment: `L=200`, `K=50`, `N=1..8`, `tau_c=150`, `tau_p_design=15`, 200 setups.
 
-### 4.2 Gao-Stress Diagnostic
+At `N=8`:
 
-Source: `figures/presentation_gao_stress_L100_tau3/gao_stress_6method_summary.csv`.
+| Method | Mean SE vs Random | P5 throughput vs Random | EE proxy vs Random | Mean actual tau_p |
+| --- | ---: | ---: | ---: | ---: |
+| Gao Matching | `-0.07%` | `-0.15%` | `-0.07%` | `15.00` |
+| Mussbah Beam Graph | `-22.97%` | `-22.93%` | `-18.64%` | `45.41` |
+| AP-Top-N (N=8) | `+5.25%` | `+5.13%` | `+5.19%` | `7.86` |
+| Beam-Weighted Threshold | `-2.14%` | `-2.72%` | `+3.02%` | `17.13` |
+| Beam-Resource Matching | `+6.57%` | `+5.55%` | `+12.01%` | `5.39` |
 
-Environment: `L=100`, `N=8`, `K=25,30,35,40,45,50`, `tau_c=150`, `tau_p_design=3`, 200 setups, bandwidth 20 MHz.
+Across `N=1..8`, Beam-Resource Matching is the best mean-SE method at every N. Top-N is competitive and simpler; it is often best or close on EE for small to mid N.
 
-Reading:
+### High-K Stress Test
 
-- This is a diagnostic setting, not the main design point. The small pilot budget makes Gao's AP matching quota bind.
-- In this stress setting, Gao separates from Random: at `K=50`, mean SE `+1.80%`, P5 throughput `+10.38%`.
-- Gao's EE proxy is still lower than Random at `K=50` (`-1.37%`) because it uses more RF/AP resources.
-- Use this figure only if someone asks why Gao looked identical to Random in the main setting.
+Source: `figures/presentation_high_k_6method/high_k_6method_summary.csv` and `figures/presentation_high_k_6method_no_mussbah/high_k_5method_summary.csv`.
 
-## 6. Graph And Environment Consistency Checklist
+Environment: `L=200`, `N=8`, `K=50,100,150,200,250,300`, `tau_c=150`, `tau_p_design=15`, 200 setups.
 
-| Priority | Item | Why it matters | Action |
-| ---: | --- | --- | --- |
-| P0 | No person-specific split in method slides | This is a joint presentation | Use method names only: AP-Top-N, Beam-Weighted, Beam-Resource |
-| P0 | Reduced reference set | Too many references obscure the contribution | K-sweep figures use Random, Gao, Mussbah, and three proposed methods |
-| P0 | Legend consistency | Scheme names previously differed between plots and slides | Use `presentation_make_clean_figures.py` outputs |
-| P0 | Environment labels on result slides | Gao reproduction, same-environment MC, and teammate K-sweep results differ | Put `K,L,N,tau_c,tau_p,setups` in slide text or caption |
-| P0 | Keep environment labels visible | Absolute SE across evaluators is not fair | Label K-sweep and mechanism snapshot separately |
-| P0 | Do not fake missing references | The main comparison is exactly six methods | Run pure Gao/Mussbah in the load-crossover environment instead of substituting Gao-style hybrid |
-| P0 | Reword Gao reproduction | Prior runs support the small-pilot advantage, but paper-exact benchmark ordering was not fully recovered; this same-environment beam-domain evaluator leaves Gao near Random | Say "reproduction anchor", not "strong same-environment baseline" |
-| P0 | Treat EE as proxy | Main EE uses active-resource estimation separate from SE serving constraints | Say "EE proxy" |
-| P1 | Do not use tau_p sweep in main deck | It distracts from the load-crossover story | Removed from main slides |
-| P1 | Add CI for the final 6-method graph if saying significance | The old E4 CI does not automatically cover this final figure | Either run bootstrap on `presentation_main_raw_main_beam20_wt10.csv` or avoid significance wording |
-| P1 | State crossover precisely | Only Beam-Weighted crosses below Random in the final same-environment K-sweep | Do not imply all proposed methods cross |
-| P2 | Add NMSE / contamination diagnostic only if time allows | It would support the answer to "why does pruning not collapse SINR?" | Backup only; not needed in main story |
+Key readings:
 
-## 7. Q&A Lines
+- Gao remains close to Random even at K=300: mean SE `+0.07%`, P5 throughput `+1.52%`.
+- Beam-Resource stays positive through K=200, then crosses below Random at K=250.
+- AP-Top-N is positive at K=50 and K=100, then crosses below Random at K=150.
+- Mussbah is not plotted in the main high-K slide because its actual tau_p exceeds tau_c from K=200 onward, making SE collapse to zero.
 
-1. **Why AP-domain Top-N at all if beam-domain looks stronger?**  
-   AP-Top-N Adaptive is a low-information AP-domain sparsification rule. Beam-domain methods use richer channel structure and currently look stronger.
+## 6. Final Claims
 
-2. **How are the proposed methods different?**  
-   AP-Top-N uses strongest AP overlap, Beam-Weighted uses weighted active/moderate beam overlap, and Beam-Resource Matching assigns UE groups through AP-beam resources.
+Safe claims:
 
-3. **Why does reducing pilot count help?**  
-   Because the prelog factor `(tau_c - tau_p) / tau_c` grows. In the final K-sweep, most SE gain is explained by this term; the useful part is that SINR does not visibly collapse in the tested range.
+- Adaptive pilot assignment helps when it reduces pilot overhead without damaging useful channel structure too much.
+- Beam-Resource Matching is the strongest current direction in this evaluator.
+- AP-Top-N is a useful simple AP-domain method with low information requirements.
+- Beam-Weighted Threshold and Mussbah show the failure mode: dense conflict graphs can increase actual pilot count and erase the prelog benefit.
+- Gao is a meaningful AP-domain reference, but under this same-environment evaluator its effect is small unless the resource constraint is artificially tightened.
 
-4. **Is the answer simply using fewer pilots?**  
-   No. A method can reduce pilots too aggressively and damage SINR. Our current evidence says the strongest methods reduce overhead while keeping the SINR-side loss small in this environment.
+Unsafe claims:
 
-5. **Which direction should the team push?**  
-   Beam-Resource Matching is the strongest current direction in the final same-environment six-method result. AP-Top-N remains useful as a simple AP-domain method. Beam-Weighted Threshold is useful as a design lesson: weighted beam conflicts help, but the pilot-count rule must not grow past the design budget under load.
+- Do not say "fewer pilots are always better."
+- Do not say "beam-domain always wins."
+- Do not say Gao was fully reproduced paper-exactly.
+- Do not say the EE metric is a complete network energy model.
+- Do not say SE gain proves SINR improvement; current evidence supports a balance interpretation.
 
-## 8. Final Wording
+## 7. Closing Sentence
 
-Use this as the final slide / closing sentence:
+Use this as the final slide sentence:
 
-> The practical value of adaptive pilot assignment is not higher SINR by itself; it is reducing pilot overhead while keeping SINR degradation small enough that the prelog gain survives.
+> The useful design direction is not simply minimizing pilot count; it is building a conflict graph that removes weak conflicts while preserving enough channel structure for the prelog gain to survive.
