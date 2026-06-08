@@ -1,0 +1,705 @@
+% !TeX program = xelatex
+% !TeX encoding = UTF-8
+\documentclass[aspectratio=169, 10pt]{beamer}
+
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=NoCommon}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{mathtools}
+
+\usetheme{AICL}
+
+\graphicspath{
+  {../Final_figures/k_sweep/25_30_k_sweep/}
+  {../Final_figures/k_sweep/50_300_k_sweep/}
+  {../Final_figures/n_sweep/}
+}
+
+\title{Pilot Assignment via Conflict Graph Sparsification}
+\subtitle{Balancing Pilot Overhead and Channel Structure in Cell-Free Massive MIMO}
+\author{Jeonghu Maeng}
+\institute{School of Electrical Engineering, Korea University}
+\date{Mobile Communication Systems Team Project}
+
+\newcommand{\methodBRM}{Beam-Resource Matching}
+\newcommand{\methodTopN}{AP-Top-\(N\)}
+\newcommand{\tauactual}{\tau_p^{\mathrm{actual}}}
+\setbeamercolor{local callout}{fg=black,bg=ku_gray}
+\newcommand{\slideheading}[1]{%
+    \par\vspace{0.08cm}%
+    \settowidth{\dimen0}{\bfseries\large #1}%
+    {\bfseries\large #1}%
+    \par\vspace{0.015cm}%
+    {\color{black}\rule{\dimen0}{0.7pt}}%
+    \par\vspace{0.16cm}%
+}
+\newcommand{\slidecallout}[2]{%
+    \vspace{0.08cm}%
+    \begin{beamercolorbox}[wd=\linewidth,sep=0.55ex,leftskip=0.8ex,rightskip=0.8ex,rounded=true]{local callout}
+        \small{\color{ku_crimson}\bfseries #1:} #2
+    \end{beamercolorbox}%
+}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+    \vspace*{-47pt}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                                      toc                                      %
+% ---------------------------------------------------------------------------- %
+\begin{frame}{Table of Contents}
+    \setbeamertemplate{section in toc}[]
+    \tableofcontents
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                            Section 1: Motivation                             %
+% ---------------------------------------------------------------------------- %
+\section{I. Motivation}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \begin{itemize}
+        \setlength{\itemsep}{0.85em}
+        \item \textbf{Conventional cellular networks} divide the service area into cells.
+        \item Each UE is mainly served by one nearby base station, so cell-edge UEs often suffer from weak desired signals and strong inter-cell interference.
+        \item \textbf{Cell-Free Massive MIMO} removes fixed cell boundaries:
+              \begin{itemize}
+                  \item many distributed APs cooperate through a central processor,
+                  \item each UE can be jointly served by multiple nearby APs.
+              \end{itemize}
+        \item This cooperation can improve coverage, macro-diversity, and service fairness.
+        \item However, coherent cooperation is only possible when the APs have accurate CSI for each UE.
+    \end{itemize}
+
+    \vspace{0.12cm}
+    \slidecallout{Key Message}{Accurate cooperation requires accurate CSI.}
+\end{frame}
+
+\begin{frame}{Traditional Cellular vs. Cell-Free Massive MIMO}
+    \centering
+    \includegraphics[height=0.84\textheight,keepaspectratio]{Cellular_CellFree_image.png}
+\end{frame}
+
+\begin{frame}{Cell-Free Gain Depends on Reliable CSI}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.48\textwidth}
+            \slideheading{Main Difference}
+            \begin{itemize}
+                \setlength{\itemsep}{0.75em}
+                \item No fixed cell boundary
+                \item Many distributed APs jointly serve each UE
+                \item CPU coordinates channel estimation and data transmission
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \slideheading{Expected Gains}
+            \begin{itemize}
+                \setlength{\itemsep}{0.75em}
+                \item Stronger macro-diversity
+                \item Shorter UE--AP distances
+                \item More uniform service quality
+                \item Improved lower-tail throughput for weak or edge-like UEs
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.25cm}
+    \begin{beamercolorbox}[wd=\linewidth,sep=0.55ex,leftskip=0.8ex,rightskip=0.8ex,rounded=true]{local callout}
+        \small{\color{ku_crimson}\bfseries Core Benefit:} Better coverage and fairness through user-centric distributed cooperation.\\
+        \small{\color{ku_crimson}\bfseries New Challenge:} This cooperation requires accurate CSI for many AP--UE links.
+    \end{beamercolorbox}
+\end{frame}
+
+\begin{frame}{The Cost: More Critical Channel Estimation}
+    \begin{itemize}
+        \setlength{\itemsep}{0.9em}
+        \item Distributed cooperation is useful only when APs have reliable CSI.
+        \item Uplink pilots are therefore required for channel estimation.
+        \item However, the coherence block is finite:
+        \[
+            \tau_p \le \tau_c.
+        \]
+        \item When the number of UEs is larger than the available pilot dimension, pilots must be reused.
+        \item If two UEs reuse the same pilot and are strong at the same APs or beams, their channel estimates become coupled.
+    \end{itemize}
+
+    \vspace{0.15cm}
+    \slidecallout{Pilot Contamination}{Pilot reuse couples channel estimates.}
+\end{frame}
+
+\begin{frame}{Research Direction}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.50\textwidth}
+            \slideheading{What Should Be Avoided?}
+            \begin{itemize}
+                \setlength{\itemsep}{0.8em}
+                \item Reusing the same pilot for UEs with overlapping serving APs
+                \item Reusing the same pilot for UEs sharing dominant beams
+                \item Increasing pilot length so much that the data fraction collapses
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \slideheading{Our Direction}
+            \begin{itemize}
+                \setlength{\itemsep}{0.8em}
+                \item Model harmful UE pairs as a conflict graph
+                \item Sparsify the graph using AP/beam-domain channel structure
+                \item Assign pilots to reduce contamination with a small actual pilot count
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \slidecallout{Research Goal}{Minimize pilot contamination while keeping pilot overhead small.}
+\end{frame}
+
+\begin{frame}{Pilot Assignment Trade-Off}
+    \begin{block}{Uplink Spectral Efficiency}
+        \[
+        \mathrm{SE}_k =
+        \underbrace{\frac{\tau_c-\tau_p}{\tau_c}}_{\mathrm{data\ fraction}}
+        \log_2(1+\mathrm{SINR}_k).
+        \]
+    \end{block}
+
+    \vspace{0.25cm}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.48\textwidth}
+            \slideheading{Small Pilot Length}
+            \begin{itemize}
+                \item Larger prelog factor
+                \item Less training overhead
+                \item Better energy efficiency potential
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \slideheading{Careless Pilot Reuse}
+            \begin{itemize}
+                \item Stronger pilot contamination
+                \item Lower SINR
+                \item Weaker lower-tail throughput
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.25cm}
+    \alert{Goal: reduce the actual pilot count while preserving useful AP/beam structure.}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                          Section 2: Reference Ideas                           %
+% ---------------------------------------------------------------------------- %
+\section{II. Reference Ideas}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \begin{table}
+        \centering
+        \small
+        \begin{tabular}{p{0.28\textwidth}p{0.22\textwidth}p{0.38\textwidth}}
+            \toprule
+            Method & Domain & Key idea \\
+            \midrule
+            Gao Matching & AP-domain & Many-to-many UE--AP matching and group-wise pilot assignment \\
+            Mussbah Beam Graph & Beam-domain & Active/moderate beam conflict graph and adaptive graph coloring \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \setlength{\itemsep}{0.8em}
+        \item The two references were proposed under different system assumptions.
+        \item In this project, both directions are compared under one unified channel model and evaluator.
+        \item The key question is \textbf{how to construct the conflict graph}, not only how to color it.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Conflict Graph Sparsification View}
+    \centering
+    \begin{tabular}{c}
+        Channel statistics in AP / beam domain \\
+        \(\Downarrow\) \\
+        Construct conflict signal between UE pairs \\
+        \(\Downarrow\) \\
+        Sparsify graph or match beam resources \\
+        \(\Downarrow\) \\
+        Assign pilots and determine \(\tauactual\) \\
+        \(\Downarrow\) \\
+        Evaluate SE, P5 throughput, EE
+    \end{tabular}
+
+    \vspace{0.4cm}
+    \slidecallout{Main Interpretation}{A good scheme preserves strong contamination edges while removing unnecessary edges that cause pilot-count explosion.}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                            Section 3: Proposed Method                         %
+% ---------------------------------------------------------------------------- %
+\section{III. Proposed Method}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \scriptsize
+    \begin{tabular}{p{0.25\textwidth}p{0.16\textwidth}p{0.49\textwidth}}
+        \toprule
+        Method & Role & Meaning \\
+        \midrule
+        Random & Baseline & Fixed pilots after strong-AP selection \\
+        Gao Matching & Reference & AP-domain many-to-many matching \\
+        Mussbah Beam Graph & Reference & Beam-domain graph coloring \\
+        \methodTopN{} & Proposed & Strongest AP Top-\(N\) overlap graph \\
+        Beam-Weighted Threshold & Caution & Weighted beam graph with threshold \\
+        \methodBRM{} & Proposed & UE--AP-beam resource matching with adaptive pilot count \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item All methods are compared using the same channel realizations and the same SE evaluator.
+        \item The proposed directions are sparse AP conflict modeling and beam-resource matching.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{\methodTopN{}: AP-Domain System Model}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.50\textwidth}
+            \slideheading{Large-Scale AP Strength}
+            For UE \(k\) and AP \(l\), let
+            \[
+                \beta_{k,l}=\mathbb{E}\{|h_{k,l}|^2\}
+            \]
+            denote the large-scale channel gain.
+
+            \vspace{0.12cm}
+            The strongest AP set is
+            \[
+                \mathcal{T}_k(N_{\mathrm{top}})
+                =
+                \operatorname{Top}_{N_{\mathrm{top}}}
+                \{\beta_{k,1},\ldots,\beta_{k,L}\}.
+            \]
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \slideheading{Sparse Conflict Edge}
+            Two UEs conflict only when their strongest AP neighborhoods overlap:
+            \[
+                e_{i,j}^{\mathrm{TopN}}
+                =
+                \mathbf{1}\!\left\{
+                \mathcal{T}_i(N_{\mathrm{top}})
+                \cap
+                \mathcal{T}_j(N_{\mathrm{top}})
+                \neq \varnothing
+                \right\}.
+            \]
+            \[
+                \mathbf{A}^{\mathrm{TopN}}
+                =
+                \bigl[e_{i,j}^{\mathrm{TopN}}\bigr]_{K\times K},
+                \qquad
+                e_{k,k}^{\mathrm{TopN}}=0.
+            \]
+        \end{column}
+    \end{columns}
+
+    \slidecallout{Interpretation}{AP-Top-\(N\) keeps only dominant AP-overlap conflicts, so weak shared APs do not unnecessarily increase the graph density.}
+\end{frame}
+
+\begin{frame}{\methodTopN{}: Pilot Assignment Flow}
+    \small
+    \begin{block}{Graph Coloring Problem}
+        \[
+        p_i\neq p_j
+        \quad
+        \text{if}
+        \quad
+        e_{i,j}^{\mathrm{TopN}}=1,
+        \qquad
+        p_k\in\{1,\ldots,\tau_p\}.
+        \]
+    \end{block}
+
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.48\textwidth}
+            \slideheading{Greedy Coloring}
+            \[
+                d_k=\sum_{j\neq k}e_{k,j}^{\mathrm{TopN}}
+            \]
+            UEs with higher graph degree are colored earlier. UEs assigned the same color reuse the same pilot.
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \slideheading{Adaptive Top-\(N\)}
+            Choose the largest sparse AP neighborhood that is still colorable:
+            \[
+                N_{\mathrm{top}}^\star
+                =
+                \max N_{\mathrm{top}}
+                \quad
+                \text{s.t.}
+                \quad
+                \chi(\mathbf{A}^{\mathrm{TopN}})\le \tau_p.
+            \]
+        \end{column}
+    \end{columns}
+
+    \slidecallout{Role in This Project}{This is the AP-domain branch: Gao's AP-overlap idea is reduced to a lightweight conflict graph.}
+\end{frame}
+
+\begin{frame}{BRM: Beam-Resource Model}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.52\textwidth}
+            \begin{itemize}
+                \setlength{\itemsep}{0.8em}
+                \item Define each AP-beam pair as a resource:
+                \[
+                    r=(l,n), \qquad r\in\mathcal{R}, \qquad |\mathcal{R}|=LN.
+                \]
+                \item Beam-domain resource strength:
+                \[
+                    P_{k,r}
+                    =
+                    P_{k,l,n}
+                    =
+                    \mathbb{E}\{|g_{k,l,n}|^2\}.
+                \]
+                \item Candidate beam-resource set:
+                \[
+                    \mathcal{B}_k
+                    =
+                    \mathcal{A}_k^{\mathrm{ref}}
+                    \cup
+                    \mathcal{I}_k^{\mathrm{ref}}.
+                \]
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \slideheading{Many-to-Many Matching}
+            \[
+                \mu_{k,r}\in\{0,1\},
+                \qquad
+                \mu_{k,r}=0
+                \quad
+                \text{if}
+                \quad
+                r\notin\mathcal{B}_k.
+            \]
+            \begin{block}{Quota Constraints}
+                \[
+                \sum_{r\in\mathcal{R}}\mu_{k,r}\le q_k^{\mathrm{UE}},
+                \qquad
+                \sum_{k=1}^{K}\mu_{k,r}\le q^{\mathrm{res}}.
+                \]
+            \end{block}
+            \vspace{-0.05cm}
+            UE and resource preferences are sorted by \(P_{k,r}\).
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[label=main-pilot-rule]{BRM: Pilot Assignment Rule}
+    \small
+    After matching, the active beam-resource set and moderate set are
+    \[
+        \mathcal{A}_k
+        =
+        \{r:\mu_{k,r}=1\},
+        \qquad
+        \mathcal{I}_k
+        =
+        \mathcal{B}_k\setminus\mathcal{A}_k.
+    \]
+
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.49\textwidth}
+            \slideheading{Resource Groups}
+            \[
+                \mathcal{G}_r
+                =
+                \{k:\mu_{k,r}=1\},
+                \qquad
+                \tauactual
+                =
+                \max_{r\in\mathcal{R}}|\mathcal{G}_r|.
+            \]
+            Resource groups with larger internal overlap are processed first:
+            \[
+                S_r
+                =
+                \sum_{i,j\in\mathcal{G}_r}
+                M_{i,j}^{B}.
+            \]
+        \end{column}
+        \begin{column}{0.49\textwidth}
+            \slideheading{Beam-Overlap Ratio}
+            \[
+                M_{i,j}^{B}
+                =
+                \frac{
+                |\mathcal{A}_i\cap\mathcal{A}_j|
+                +
+                |\mathcal{A}_i\cap\mathcal{I}_j|
+                +
+                |\mathcal{I}_i\cap\mathcal{A}_j|
+                }{
+                |\mathcal{A}_i|
+                }.
+            \]
+            \[
+                p_u^\star
+                =
+                \arg\min_{p\in\{1,\ldots,\tauactual\}}
+                \sum_{i:p_i=p}
+                \left(M_{u,i}^{B}+M_{i,u}^{B}\right).
+            \]
+        \end{column}
+    \end{columns}
+
+    \begin{flushright}
+        \hyperlink{app-brm-flow}{\beamergotobutton{Algorithm Flow}}
+    \end{flushright}
+\end{frame}
+
+\begin{frame}{Two Proposed System-Model Branches}
+    \small
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.48\textwidth}
+            \slideheading{AP-Domain Branch}
+            \[
+                \beta_{k,l}
+                \rightarrow
+                \mathcal{T}_k(N_{\mathrm{top}})
+                \rightarrow
+                \mathbf{A}^{\mathrm{TopN}}
+                \rightarrow
+                p_k
+            \]
+            \begin{itemize}
+                \item Simple large-scale fading information
+                \item Sparse AP-overlap conflict graph
+                \item Graph coloring under \(\tau_p\)
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \slideheading{Beam-Domain Branch}
+            \[
+                P_{k,l,n}
+                \rightarrow
+                \mu_{k,r}
+                \rightarrow
+                \mathcal{G}_r
+                \rightarrow
+                \tauactual,\ p_k
+            \]
+            \begin{itemize}
+                \item AP-beam resources as matching objects
+                \item RF-chain-aware active beam selection
+                \item Adaptive pilot count from largest group
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \slidecallout{Main Difference}{AP-Top-\(N\) sparsifies conflicts between UEs; Beam-Resource Matching directly allocates AP-beam resources before pilot reuse.}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                            Section 4: Evaluation                              %
+% ---------------------------------------------------------------------------- %
+\section{IV. Evaluation}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \small
+    \begin{tabular}{ll}
+        \toprule
+        Parameter & Main setting \\
+        \midrule
+        APs & \(L=200\) \\
+        Antennas per AP & \(N=8\) \\
+        Users & \(K=25,30,35,40,45,50\) \\
+        Coherence block & \(\tau_c=150\) \\
+        Design pilot budget & \(\tau_p^{design}=15\) \\
+        Channel & 3GPP UMi-like pathloss, one-ring covariance, Rician LoS \\
+        Power control & Full uplink power \\
+        Monte Carlo setups & 200 \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Metrics: average SE, P5 throughput, EE proxy, actual pilot count.
+        \item Same channel model and closed-form SINR evaluator are used for all methods.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Result: Moderate User Load}
+    \centering
+    \includegraphics[width=0.88\textwidth]{presentation_clean_load_crossover_se.png}
+
+    \vspace{-0.1cm}
+    \small
+    At \(K=50\): \methodBRM{} \(+6.66\%\), \methodTopN{} \(+5.35\%\) average SE vs Random.
+\end{frame}
+
+\begin{frame}{Why It Works: Actual Pilot Count}
+    \centering
+    \includegraphics[width=0.88\textwidth]{presentation_clean_pilot_count_vs_k.png}
+
+    \vspace{-0.1cm}
+    \small
+    Winning methods keep \(\tauactual\) below the design budget, while dense graphs lose prelog gain.
+\end{frame}
+
+\begin{frame}{Lower-Tail Throughput}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.54\textwidth}
+            \includegraphics[width=\textwidth]{presentation_latest_6method_p5_throughput_vs_k.png}
+        \end{column}
+        \begin{column}{0.43\textwidth}
+            \vspace{0.2cm}
+            \begin{itemize}
+                \setlength{\itemsep}{0.8em}
+                \item P5 throughput reflects weaker UE performance.
+                \item At \(K=50\), \methodBRM{} improves P5 throughput by \(+7.07\%\).
+                \item \methodTopN{} also stays positive at \(+6.32\%\).
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Antenna Sweep Robustness}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.50\textwidth}
+            \includegraphics[width=\textwidth]{n_sweep_1248_avg_se_vs_n.png}
+        \end{column}
+        \begin{column}{0.50\textwidth}
+            \includegraphics[width=\textwidth]{n_sweep_1248_pilot_count_vs_n.png}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.15cm}
+    \small
+    Representative antenna counts \(N=1,2,4,8\) preserve the same method ranking.
+\end{frame}
+
+\begin{frame}{High-\(K\) Stress Test}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.50\textwidth}
+            \includegraphics[width=\textwidth]{high_k_avg_se_vs_k.png}
+        \end{column}
+        \begin{column}{0.50\textwidth}
+            \includegraphics[width=\textwidth]{high_k_avg_ee_vs_k.png}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.15cm}
+    \small
+    Adaptive assignment has an operating range: \methodBRM{} remains useful through about \(K=200\), then pilot/RF savings become marginal.
+\end{frame}
+
+\begin{frame}{Mussbah at High Load}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Graph Coloring Rule}
+                \[
+                    \tauactual = \chi(G).
+                \]
+            \end{block}
+            \begin{itemize}
+                \setlength{\itemsep}{0.7em}
+                \item Beam conflict graph becomes too dense.
+                \item At high \(K\), \(\tauactual\) can exceed \(\tau_c\).
+                \item SE is then clamped by the prelog:
+                \[
+                \max\!\left(\frac{\tau_c-\tauactual}{\tau_c},0\right).
+                \]
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \includegraphics[width=\textwidth]{high_k_pilot_count_vs_k.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                            Section 5: Conclusion                              %
+% ---------------------------------------------------------------------------- %
+\section{V. Conclusion}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \scriptsize
+    \begin{tabular}{p{0.23\textwidth}p{0.30\textwidth}p{0.37\textwidth}}
+        \toprule
+        Reference & Expected strength & Observation in unified evaluator \\
+        \midrule
+        Gao Matching & AP matching helps when resources are tight & Near Random in the main setting; small lower-tail effect under stress \\
+        Mussbah Beam Graph & Adaptive beam coloring reduces training overhead & Works in paper-style envelope; too dense in common \(K=50\) and high-\(K\) settings \\
+        \methodBRM{} & Balance beam structure and pilot count & Best current direction in moderate load \\
+        \methodTopN{} & Simple sparse AP conflict signal & Practical low-information alternative \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{Final Takeaways}
+    \begin{itemize}
+        \setlength{\itemsep}{1em}
+        \item Pilot assignment is a balance between pilot overhead and SINR preservation.
+        \item \methodBRM{} gives the strongest main result:
+        \[
+            +6.66\% \ \mathrm{mean\ SE}, \quad
+            +7.07\% \ \mathrm{P5\ throughput}, \quad
+            +12.35\% \ \mathrm{EE\ proxy}
+        \]
+        at \(K=50\).
+        \item \methodTopN{} is simpler and still robust:
+        \[
+            +5.35\% \ \mathrm{mean\ SE\ at}\ K=50.
+        \]
+        \item The key is not simply fewer pilots, but the right conflict graph.
+    \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                                  Appendix                                     %
+% ---------------------------------------------------------------------------- %
+\appendix
+\section{Appendix}
+
+\begin{frame}{Backup: Full eCDF at \(K=50\)}
+    \centering
+    \includegraphics[width=0.82\textwidth]{presentation_latest_6method_ecdf_throughput_k50.png}
+\end{frame}
+
+\begin{frame}{Backup: N-Sweep EE and P5 Throughput}
+    \begin{columns}[T,onlytextwidth]
+        \begin{column}{0.50\textwidth}
+            \includegraphics[width=\textwidth]{n_sweep_1248_avg_ee_vs_n.png}
+        \end{column}
+        \begin{column}{0.50\textwidth}
+            \includegraphics[width=\textwidth]{n_sweep_1248_p5_throughput_vs_n.png}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[label=app-brm-flow]{Backup: Beam-Resource Matching Flow}
+    \begin{algorithm}[H]
+        \DontPrintSemicolon
+        Compute beam-domain power \(P_{k,r}\) for each UE-resource pair\;
+        Build candidate resource set \(\mathcal{B}_k\) for each UE\;
+        Match UEs to AP-beam resources with quota constraints\;
+        Form resource groups \(\mathcal{G}_r=\{k:\mu_{k,r}=1\}\)\;
+        Set \(\tauactual=\max_r|\mathcal{G}_r|\)\;
+        Assign pilots by minimizing reuse cost \(C(u,p)\)\;
+        Evaluate closed-form SINR and SE\;
+        \caption{\methodBRM{} summary}
+    \end{algorithm}
+
+    \begin{flushright}
+        \hyperlink{main-pilot-rule}{\beamerreturnbutton{Return}}
+    \end{flushright}
+\end{frame}
+
+\end{document}
